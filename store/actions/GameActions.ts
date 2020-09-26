@@ -2,15 +2,28 @@ import axios from 'axios'
 import { ActionTypes, GamePhases } from '../constants'
 import { state as storeInterface } from '../store'
 
-const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = ActionTypes
-const { BettinStage, InitialDraw, FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
 
+/**  CONSTANTS */
+const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = ActionTypes
+const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
 const base_url:string = 'https://deckofcardsapi.com/api'
+
+
+/** UTILITIES */
+const checkPhase = (action:string, accepted:string[], actual: string):void => {
+    if (!accepted.includes(actual)) {
+        throw `${actual} is not a valid phase for the action ${action}`
+    }
+}
+
 const drawCards = (deck_id:string, number_of_cards:number=1, baseUrl:string=base_url) => 
     axios.get(`${baseUrl}/deck/${deck_id}/draw/?count=${number_of_cards}`)
 
+
+/** ACTIONS */
 const startHand = () => async (dispatch, getState) => {
-    const { game: { deck, isLastOfDeck }}:storeInterface = getState()
+    const { game: { deck, isLastOfDeck, current_hand: { phase } }}:storeInterface = getState()
+    checkPhase(StartHand, [PreGame, GameEnded], phase)
     let new_deck:string
     if (isLastOfDeck) {
         const { data: {deck_id} } = await axios.get(base_url + '/deck/new/shuffle/?deck_count=6')
@@ -75,7 +88,6 @@ const doPlayerStay = () => dispatch => {
     dispatch({ type: PlayerStay, payload: {new_phase: BankerAction}})
 }
 
-
 const bankerDraw = () => async (dispatch, getState) => {
     const { game: { deck } }:storeInterface = getState()
     const { data: { cards, remaining } } = await drawCards(deck)
@@ -92,5 +104,6 @@ const bankerDraw = () => async (dispatch, getState) => {
 const doEndgame = () => dispatch => {
     dispatch({ type: EndgameAction, payload: {new_phases: GameEnded}})
 }
+
 
 export { startHand, makeBet, doInitialDeal, doSurrender, playerDraw, doPlayerStay, bankerDraw, doEndgame }

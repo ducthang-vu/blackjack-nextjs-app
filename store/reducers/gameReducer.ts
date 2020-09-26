@@ -1,11 +1,10 @@
 import { card as cardInterface} from '../../utils/interfaces'
-import { cardsSum, getScore, evaluateResult } from '../../utils/functions'
+import { getScore, evaluateResult } from '../../utils/functions'
 import { ActionTypes, GamePhases } from '../constants'
 import produce from 'immer'
 
-const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = ActionTypes
-const { FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
 
+/** Interfaces */
 interface stateInterface {
     deck: string,
     isLastOfDeck: boolean
@@ -29,6 +28,12 @@ interface action {
     [propName: string]: any;
 }
 
+
+/** Constants */
+const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, 
+        PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = ActionTypes
+const { FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
+
 const initialState:stateInterface = {
         deck: null,
         isLastOfDeck: true,
@@ -43,11 +48,15 @@ const initialState:stateInterface = {
     }
 }
 
+
+/* UTILITIES */
 const updateScore = (draft:stateInterface) => {
     draft.current_hand.playerScore = getScore(draft.current_hand.player)
     draft.current_hand.bankerScore = getScore(draft.current_hand.banker)
 }
 
+
+/** REDUCER */
 const gameReducer = produce((draft:stateInterface, action:action) => {
     const { type, payload } = action
     switch (type) {
@@ -92,7 +101,6 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
         case PlayerStay:
             draft.current_hand.phase = BankerAction
         case BankerDraw:
-            // mandatory bankeraction phase
             draft.current_hand.banker.push(payload.newCard)
             updateScore(draft)
             let { current_hand: {bankerScore }} = draft
@@ -104,7 +112,7 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
                 } else {
                     draft.current_hand.phase = Endgame
                 }
-        case Endgame:
+        case EndgameAction:
             draft.current_hand.winner = evaluateResult(draft.current_hand.playerScore, draft.current_hand.bankerScore)
             draft.current_hand.phase = GameEnded
     }

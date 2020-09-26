@@ -13,6 +13,7 @@ enum ActionTypes {
 }
 
 enum GamePhases {
+    PreGame = 'PreGame',
     BettinStage = 'BettingStage',
     InitialDraw = 'InitialDraw',
     FirstUserAction = 'FirstUserAction',
