@@ -1,4 +1,5 @@
-import Head from 'next/head'
+
+import React from 'react'
 import { useSelector  } from 'react-redux'
 import Layout from '../layout/Layout'
 import SignIn from '../components/SignIn'
@@ -10,19 +11,10 @@ export default function Home() {
 
   return (
     <Layout>
-      <div className="HomePageContent">
-        <div className="container">
-          {username ?
-            <GameScreen currentName={username}></GameScreen>:
-            <SignIn></SignIn>
-          }
-        </div>
-        <style>{`
-            .HomePageContent {
-              height: 100%;
-            }
-        `}</style>
-      </div>
+      {username ?
+        <GameScreen currentName={username}></GameScreen>:
+        <SignIn></SignIn>
+      }
     </Layout>
   )
 }

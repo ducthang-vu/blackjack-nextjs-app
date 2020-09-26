@@ -1,8 +1,6 @@
 import React from 'react';
 import MainHeader from './MainHeader'
 import MainFooter from './MainFooter'
-import { Provider } from 'react-redux'
-import store from '../store/store'
 import { link as linkInterface } from '../utils/interfaces'
 
 const Layout = (props: {children:JSX.Element}) => {
@@ -20,40 +18,21 @@ const Layout = (props: {children:JSX.Element}) => {
             path: '/info'
         }
     ]
+
     return (
-        <Provider store={store}>
-            <React.StrictMode>
-                <div className="app">
-                    <MainHeader links={navLinks}></MainHeader>
-                    <main>{props.children}</main>
-                    <MainFooter></MainFooter>
-                </div>
-            </React.StrictMode>
-            <style jsx>{`
-                .app {
-                    display: flex;
-                    flex-direction: column;
-                    min-height: 100vh;
-                    margin: auto;
-                    overflow: hidden;
-                }
-                header {
-                    height: 50px;
-                }
+        <section className="hero is-success is-fullheight">
+            <div className="hero-head">
+                <MainHeader links={navLinks}></MainHeader>
+            </div>
 
-                main {
-                    flex-grow: 1;
-                    background-color: #00b894;
-                    height: 100%;
-                    width: 100%;
-                }
+            <main className="hero-body">
+                {props.children}
+            </main>
 
-                footer {
-                    height: 50px;
-                }
-            `}
-            </style>
-        </Provider>
+            <div className="hero-foot">
+                <MainFooter></MainFooter>
+            </div>
+        </section>
     )
 }
 

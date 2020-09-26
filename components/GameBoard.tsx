@@ -20,6 +20,7 @@ const SemiBoard = ({ cards, actor, score }:semiBoardProps):JSX.Element => {
                 
                 <style jsx>{`
                     .SemiBoardComponent {
+                        height: 50%;
                         position: relative;
                     }
 
@@ -41,7 +42,7 @@ const GameBoard = ():JSX.Element => {
     const playerScore = useSelector<stateInterface, number|string>(state => state.game.current_hand.playerScore)
 
     return (
-            <div className="GameBoardComponent">
+            <div className="GameBoardComponent column">
                 <SemiBoard
                     cards={bankerCards}
                     actor="banker"
@@ -52,17 +53,6 @@ const GameBoard = ():JSX.Element => {
                     actor="player"
                     score={playerScore}
                 ></SemiBoard>
-
-                <style>{`
-                    .GameBoardComponent {
-                        min-height: 100%;
-                        flex-basis: 75%;
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: space-between;
-                        padding-left: 50px;
-                    }
-                `}</style>
             </div>
         )
 }

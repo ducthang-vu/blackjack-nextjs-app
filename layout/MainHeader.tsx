@@ -7,56 +7,22 @@ interface props {
 
 const MainHeader = ( { links }:props ):JSX.Element => {
     return (
-        <header className="main-header">
-            <div className="container main-header__container">
-                <div 
-                    className="main-header__container_logo"
-                >Blackjack</div>
-                <nav>
+        <header className="Main-Header">
+            <div className="container navbar">
+                <div className="navbar-brand">Blackjack Next App</div>
+                <nav className="navbar-end">
                     {links.map(({ label, path }, index:number) => 
                         <Link 
                             key={index}
                             href={path}
                         >
-                            <a>
+                            <a className="navbar-item">
                                 <span>{label}</span>
                             </a>
                         </Link>
                     )}
                 </nav>
             </div>
-            
-            <style jsx>
-                {`
-                    .main-header {
-                        background-color: #d63031;
-                        font-weight: bold;
-                        color: white;
-                    }
-
-                    .main-header__container {
-                        height: 50px;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    }
-
-                    .main-header__container_logo {
-                        font-size: 150%;
-                    }
-
-                    .main-header__container a {
-                        display: inline-flex;
-                        justify-content: center;
-                        align-items: center;
-                        padding: 10px 20px;;
-                    }
-
-                    .main-header__container a:hover {
-                        background-color: #e17055;
-                    }
-                `}
-            </style>
         </header>
     )
 }

@@ -24,7 +24,7 @@ const BettingMenu = ({ setPlayerBet }) => {
                     </li>
                 )}
             </ul>
-            <button>Post bet</button>
+            <button className="button">Post bet</button>
         </form>
     )
 }

@@ -79,9 +79,9 @@ const Game = (props: GameProps): JSX.Element => {
     }
 
     return (
-        <div className="GameScreenComponent">
+        <div className="GameScreenComponent container columns">
             <GameBoard></GameBoard>
-            <div className="GameScreenComponent_game-menu">
+            <div className="GameScreenComponent_game-menu column is-one-quarter">
                 <div className="GameScreenComponent_game-menu__message-box">
                     {message}
                 </div>
@@ -89,8 +89,8 @@ const Game = (props: GameProps): JSX.Element => {
                     {gamePhase === 'player-bet' && <BettingMenu setPlayerBet={setPlayerBet}></BettingMenu>}
                     {gamePhase === 'player-action' && 
                         <ul>
-                            <button onClick={() => dispatch(playerStay())}>Stay</button>
-                            <button onClick={() => dispatch(dealCard(true))}>Draw</button>
+                            <button className="button is-primary" onClick={() => dispatch(playerStay())}>Stay</button>
+                            <button className="button is-primary" onClick={() => dispatch(dealCard(true))}>Draw</button>
                         </ul>
                     }
                     {gamePhase === 'game-ended' && 
@@ -104,34 +104,10 @@ const Game = (props: GameProps): JSX.Element => {
                     Your credit: ${playerCredit.toFixed(2)}
                 </div>
             </div>
-
-            <style jsx>{`
+            <style>{`
                 .GameScreenComponent {
-                    display: flex;
-                }
-
-                .GameScreenComponent_game-menu {
-                    flex-basis: 25%;
-                    padding: 10px;
-                }
-
-                .GameScreenComponent_game-menu > * {
-                    border: 1px solid black;
-                    background-color: #d63031;
-                    margin-bottom: 25px;
-                    padding: 15px;
-                }
-
-                .GameScreenComponent_game-menu__message-box {
-                    height: 100px;
-                }
-
-                .GameScreenComponent_game-menu__modal {
-                    
-
-                }
-
-                .GameScreenComponent_game-menu__credit {
+                    height: 100%;
+                    width: 100%;
                 }
             `}</style>
         </div>
