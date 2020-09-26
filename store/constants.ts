@@ -3,6 +3,7 @@ import { Action } from "redux";
 enum ActionTypes {
     StartHand = 'StartHand',
     MakeBet = 'MakeBet',
+    InitialDeal = 'InitialDeal',
     Surrender = 'Surrender',
     DoubleDown = 'DoubleDown',
     PlayerDraw = 'PlayerDraw',

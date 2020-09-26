@@ -1,18 +1,6 @@
 const { cardsSum } = require('../utils/functions')
-import {card as cardInterface} from '../utils/interfaces'
+import { makeCards} from '../utils/functions'
 
-const makeCard = (value:string):cardInterface => ({
-    "image": "fake",
-    "value": value,
-    "suit": 'fake',
-    "code": 'fake'
-})
-
-const makeCards = (...args:string[]) => {
-    let result:cardInterface[] = []
-    args.forEach(value => result.push(makeCard(value)))
-    return result
-}
 
 test('Tests with array of length 1 (no aces)', () => {
     expect(cardsSum(makeCards('KING'))).toBe(10)

@@ -1,15 +1,13 @@
 import axios from 'axios'
-import { card as cardInterface } from '../../utils/interfaces'
 import { ActionTypes, GamePhases } from '../constants'
 import { state as storeInterface } from '../store'
 
-const { StartHand, MakeBet, Surrender, DoubleDown, PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = ActionTypes
+const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = ActionTypes
 const { BettinStage, InitialDraw, FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
-const base_url:string = 'https://deckofcardsapi.com/api'
 
+const base_url:string = 'https://deckofcardsapi.com/api'
 const drawCards = (deck_id:string, number_of_cards:number=1, baseUrl:string=base_url) => 
     axios.get(`${baseUrl}/deck/${deck_id}/draw/?count=${number_of_cards}`)
-    
 
 const startHand = () => async (dispatch, getState) => {
     const { game: { deck, isLastOfDeck }}:storeInterface = getState()
@@ -42,9 +40,9 @@ const doInitialDeal = () => async (dispatch, getState) => {
     const { game: { deck } }:storeInterface = getState()
     const { data: { cards, remaining } } = await drawCards(deck, 4)
     dispatch({
-        type: MakeBet, 
+        type: InitialDeal, 
         payload: {
-            newPlayerCards: (cards[1], cards[3]),
+            newPlayerCards: [cards[1], cards[3]],
             newBankerCards: cards[2],
             remaining,
             new_phase: [FirstUserAction, BankerAction, Endgame]
@@ -55,20 +53,20 @@ const doInitialDeal = () => async (dispatch, getState) => {
 const doSurrender = () => dispatch => {
     dispatch({
         type: Surrender,
-        payload: {new_phase: Endgame},
+        payload: {new_phase: GameEnded},
     })
 }
 
 const playerDraw = (isDoubleDown=false) => async (dispatch, getState) => {
     const { game: { deck } }:storeInterface = getState()
     const { data: { cards, remaining } } = await drawCards(deck)
-    const new_phase_base:GamePhases[] = [BankerAction, Endgame]
+    const phase_base:GamePhases[] = [BankerAction, Endgame]
     dispatch({
-        type: isDoubleDown ? PlayerDraw : DoubleDown,
+        type: isDoubleDown ? DoubleDown: PlayerDraw,
         payload: {
-            new_card: cards[0],
+            newCard: cards[0],
             remaining,
-            new_phase: isDoubleDown ? new_phase_base : new_phase_base.concat(UserAction)
+            new_phase: isDoubleDown ? phase_base : phase_base.concat(UserAction)
         }
     })
 }

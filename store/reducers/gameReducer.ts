@@ -1,7 +1,10 @@
 import { card as cardInterface} from '../../utils/interfaces'
 import { cardsSum, getScore, evaluateResult } from '../../utils/functions'
-import { ActionsTypes, GamePhases } from '../constants'
+import { ActionTypes, GamePhases } from '../constants'
 import produce from 'immer'
+
+const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = ActionTypes
+const { FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
 
 interface stateInterface {
     deck: string,
@@ -19,7 +22,11 @@ interface stateInterface {
 
 interface action {
     type: string,
-    payload: any
+    payload: {
+        new_phase:string,
+        [propName: string]: any;
+    }
+    [propName: string]: any;
 }
 
 const initialState:stateInterface = {
@@ -36,134 +43,73 @@ const initialState:stateInterface = {
     }
 }
 
-const checkPhase = (current_phase:string, correct_phase:string, actionType:string):void => {
-    if (current_phase !== correct_phase) {
-        throw `${actionType} can only be used in ${correct_phase} phase not in "${current_phase}" .`
-    }
+const updateScore = (draft:stateInterface) => {
+    draft.current_hand.playerScore = getScore(draft.current_hand.player)
+    draft.current_hand.bankerScore = getScore(draft.current_hand.banker)
 }
 
-const getScoreComposed = (cards:cardInterface[], qty:number) => getScore(cardsSum(cards), qty)
-
-const gameReducer = produce((draft, action) => {
-    switch (action.type) {
-        case RECEIVE_PRODUCTS:
-            action.products.forEach(product => {
-                draft[product.id] = product
-            })
-    }
-}, {})
-
-const gameReducerA = (state:stateInterface=initialState, action:action):stateInterface => {
-    const current_phase = state.current_hand.phase
-    switch (action.type) {
-        case 'startNewHand':
-            checkPhase(current_phase, 'game-ended', action.type)
-            return {
-                ...initialState,
-                deck: state.deck,
-                current_hand: {
-                    ...initialState.current_hand,
-                    phase: 'pre-game'
-                }
+const gameReducer = produce((draft:stateInterface, action:action) => {
+    const { type, payload } = action
+    switch (type) {
+        case StartHand:
+            draft.deck = payload.deck
+            draft.current_hand.phase = payload.new_phase
+        case MakeBet:
+            draft.current_hand.ammountBet
+            draft.current_hand.phase = payload.new_phase
+        case InitialDeal:
+            draft.current_hand.player = payload.newPlayerCards
+            draft.current_hand.banker = payload.newBankerCards
+            draft.isLastOfDeck = payload.remaining > 40
+            updateScore(draft)
+            if (
+                draft.current_hand.playerScore === 'blackjack' && 
+                ![11, 10].includes(Number(draft.current_hand.bankerScore))
+            ) {
+                draft.current_hand.phase = Endgame
             }
-        case 'setNewHand':
-            checkPhase(current_phase, 'pre-game', action.type)
-            return {
-                ...initialState,
-                deck: action.payload,
-                current_hand: {
-                    ...state.current_hand,
-                    phase: 'player-bet'
-                }
-            }
-        case 'setBet':
-            checkPhase(current_phase, 'player-bet', action.type)
-            return {
-                ...state,
-                current_hand: {
-                    ...state.current_hand,
-                    ammountBet: action.payload,
-                    phase: 'first-deal'
-                }
-            }
-        case 'dealCard':
-            const { card, isPlayer, remaining, isDoubleDown } = action.payload
-            const actor = isPlayer ? 'player' : 'banker'
-            let newState:stateInterface = {
-                ...state,
-                isLastOfDeck: remaining > 30,
-                current_hand: {
-                    ...state.current_hand,
-                    [actor]: state.current_hand[actor].concat(card),
-                    playerScore: getScoreComposed(state.current_hand.player, state.current_hand.player.length),
-                    bankerScore: getScoreComposed(state.current_hand.banker, state.current_hand.banker.length),
-                }
-            }
-            const provCurrentHand = () => newState.current_hand
-            newState = {
-                ...newState,
-                current_hand: {
-                    ...provCurrentHand(),
-                    playerScore: getScoreComposed(provCurrentHand().player, provCurrentHand().player.length),
-                    bankerScore: getScoreComposed(provCurrentHand().banker, provCurrentHand().banker.length),
-                }
-            }
-            if (['first-deal', 'player-action'].includes(current_phase)) {
-                if (provCurrentHand().player.length < 2) {
-                    newState.current_hand.phase = 'first-deal'
-                } else if (provCurrentHand().playerScore === 21 || isDoubleDown === true) {
-                    newState.current_hand.phase = 'banker-action'
-                } else if (
-                    (
-                        provCurrentHand().playerScore == 'blackjack' && 
-                        ![11, 10].includes(Number(provCurrentHand().bankerScore)
-                    ) ||
-                    provCurrentHand().playerScore) === 'busted'
-                ) {
-                    newState.current_hand.phase = 'endgame'
-                } 
-                else {
-                    newState.current_hand.phase = 'player-action'
-                }
+            else if (draft.current_hand.playerScore === 'blackjack') {
+                draft.current_hand.phase = BankerAction
             } else {
-                checkPhase(current_phase, 'banker-action', action.type) 
-                const bankerScore = provCurrentHand().bankerScore
-                if (
-                    bankerScore >= 17 || 
-                    bankerScore === 'blackjack' || 
-                    bankerScore === 'busted' || 
-                    provCurrentHand().playerScore === 'blackjack'
+                draft.current_hand.phase = FirstUserAction
+            }
+        case Surrender:
+            draft.current_hand.winner = 'banker'
+            draft.current_hand.phase = GameEnded
+        case PlayerDraw:
+            draft.current_hand.player.push(payload.newCard)
+            updateScore(draft)
+            if (['busted', 21].includes(draft.current_hand.playerScore)) {
+                draft.current_hand.winner = 'banker'
+                draft.current_hand.phase = GameEnded
+            } else {
+                draft.current_hand.phase = UserAction
+            }
+        case DoubleDown:
+            draft.current_hand.player.push(payload.newCard)
+            updateScore(draft)
+            draft.current_hand.phase = BankerAction
+        case PlayerStay:
+            draft.current_hand.phase = BankerAction
+        case BankerDraw:
+            // mandatory bankeraction phase
+            draft.current_hand.banker.push(payload.newCard)
+            updateScore(draft)
+            let { current_hand: {bankerScore }} = draft
+            if (bankerScore >= 17 ||
+                ['blackjack', 'busted'].includes(String(bankerScore)) ||
+                draft.current_hand.playerScore === 'blackjack'
                 ) {
-                        newState.current_hand.phase = 'endgame'
-                    } else {
-                        newState.current_hand.phase = 'banker-action'
+                    draft.current_hand.phase = Endgame
+                } else {
+                    draft.current_hand.phase = Endgame
                 }
-            }
-            return newState
-        case 'playerStay':
-            checkPhase(current_phase, 'player-action', action.type)
-            return {
-                ...state,
-                current_hand: {
-                    ...state.current_hand,
-                    phase: 'banker-action'
-                }
-            }
-        case 'endgame':
-            checkPhase(current_phase, 'endgame', action.type)
-            const { current_hand: { bankerScore, playerScore } } = state
-            return {
-                ...state,
-                current_hand: {
-                    ...state.current_hand,
-                    winner: evaluateResult(playerScore, bankerScore),
-                    phase: 'game-ended'
-                }
-            }
-        default: 
-            return state
+        case Endgame:
+            draft.current_hand.winner = evaluateResult(draft.current_hand.playerScore, draft.current_hand.bankerScore)
+            draft.current_hand.phase = GameEnded
     }
-}
+}, initialState)
+
 
 export type { stateInterface as state }
 export { gameReducer }
