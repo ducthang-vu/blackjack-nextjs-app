@@ -1,6 +1,7 @@
 import { card as cardInterface} from '../../utils/interfaces'
 import { cardsSum, getScore, evaluateResult } from '../../utils/functions'
-import { stat } from 'fs/promises'
+import { ActionsTypes, GamePhases } from '../constants'
+import produce from 'immer'
 
 interface stateInterface {
     deck: string,
@@ -43,7 +44,16 @@ const checkPhase = (current_phase:string, correct_phase:string, actionType:strin
 
 const getScoreComposed = (cards:cardInterface[], qty:number) => getScore(cardsSum(cards), qty)
 
-const gameReducer = (state:stateInterface=initialState, action:action):stateInterface => {
+const gameReducer = produce((draft, action) => {
+    switch (action.type) {
+        case RECEIVE_PRODUCTS:
+            action.products.forEach(product => {
+                draft[product.id] = product
+            })
+    }
+}, {})
+
+const gameReducerA = (state:stateInterface=initialState, action:action):stateInterface => {
     const current_phase = state.current_hand.phase
     switch (action.type) {
         case 'startNewHand':
