@@ -29,7 +29,7 @@ const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction,
 
 const Game = ({ username }:GameProps): JSX.Element => {
     const credits = useSelector<stateInterface, number>(state => state.user.credits)
-    const gamePhase = useSelector<stateInterface, string>(state => state.game.current_hand.phase)
+    const gamePhase = useSelector<stateInterface, GamePhases>(state => state.game.current_hand.phase)
     const bankerCards = useSelector<stateInterface, cardInterface[]>(state => state.game.current_hand.banker)
     const playerCards = useSelector<stateInterface, cardInterface[]>(state => state.game.current_hand.player)
     const bankerScore = useSelector<stateInterface, number|string>(state => state.game.current_hand.bankerScore)
@@ -57,6 +57,8 @@ const Game = ({ username }:GameProps): JSX.Element => {
         ['Hit', () => dispatch(playerDraw())],
         ['Stand', () => dispatch(doPlayerStay())]
     ]
+
+    const potShow:number|null = [GameEnded, PreGame, BettinStage].includes(gamePhase) ? null : betPot
 
     useEffect(
         () => {
@@ -165,8 +167,9 @@ const Game = ({ username }:GameProps): JSX.Element => {
                         <MenuHead
                             username={username}
                             credits={credits}
+                            currentPot={potShow}
                         ></MenuHead>
-                    , [username, credits])
+                    , [username, credits, potShow])
                 }
                 <MenuModals
                     message={message}

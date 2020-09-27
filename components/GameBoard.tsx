@@ -21,33 +21,37 @@ const GameBoard = (
             <div className="GameBoardComponent column has-text-centered">
                 {playerCards.length ?
                     <React.Fragment>
-                        <div className="half-board banker-half">
-                            {bankerCards.map(card => 
-                                <Card
-                                    image={card.image}
-                                    value={card.value}
-                                    suit={card.suit}
-                                    code={card.code}
-                                ></Card>
+                        <ul className="half-board banker-half">
+                            {bankerCards.map((card, index) => 
+                                <li key={index}>
+                                    <Card
+                                        image={card.image}
+                                        value={card.value}
+                                        suit={card.suit}
+                                        code={card.code}
+                                    ></Card>
+                                </li>
                             )}
                             <div className="score-box">
                                 <span>{bankerScore}</span>
                             </div>
-                        </div>
+                        </ul>
                         <p>Blacjack pays 3 to 2 - &spades; &clubs; &hearts; &diams; - Dealer stands on all 17s</p>
-                        <div className="half-board player-half">
-                            {playerCards.map(card => 
-                                <Card
-                                    image={card.image}
-                                    value={card.value}
-                                    suit={card.suit}
-                                    code={card.code}
-                                ></Card>
+                        <ul className="half-board player-half">
+                            {playerCards.map((card, index) => 
+                                <li key={index}>
+                                    <Card
+                                        image={card.image}
+                                        value={card.value}
+                                        suit={card.suit}
+                                        code={card.code}
+                                    ></Card>
+                                </li>
                             )}
                             <div className="score-box">
                                 <span>{playerScore}</span>
                             </div> 
-                        </div>
+                        </ul>
                     </React.Fragment>:
 
                     <div className="no-cards-screen-message has-text-centered">

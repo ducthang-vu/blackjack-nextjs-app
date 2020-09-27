@@ -14,7 +14,7 @@ interface stateInterface {
         bankerScore: string|number,
         playerScore: string|number,
         ammountBet: number|null,
-        phase: string|null,
+        phase: GamePhases|null,
         winner: string|null
     }
 }
@@ -22,7 +22,7 @@ interface stateInterface {
 interface action {
     type: string,
     payload: {
-        new_phase:string,
+        new_phase:GamePhases,
         [propName: string]: any;
     }
     [propName: string]: any;
