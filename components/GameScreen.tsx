@@ -59,7 +59,7 @@ const Game = ({ username }:GameProps): JSX.Element => {
     ]
 
     const doDoubleDown = (currentPot:number) => {
-        setCredit(-currentPot)
+        dispatch(setCredit(-currentPot))
         dispatch(playerDraw(true))
     }
 
