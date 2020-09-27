@@ -1,5 +1,3 @@
-import { Action } from "redux";
-
 enum ActionTypes {
     StartHand = 'StartHand',
     MakeBet = 'MakeBet',

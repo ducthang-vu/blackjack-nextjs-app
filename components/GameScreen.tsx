@@ -36,8 +36,7 @@ const Game = ({ username }:GameProps): JSX.Element => {
     const playerScore = useSelector<stateInterface, number|string>(state => state.game.current_hand.playerScore)
     const betPot = useSelector<stateInterface, number>(state => state.game.current_hand.ammountBet)
     const winner = useSelector<stateInterface, string>(state => state.game.current_hand.winner)
-    const dispatch = useDispatch()  
-    const [intervalActive, setIntervalActive] = useState<NodeJS.Timer|null>(null)
+    const dispatch = useDispatch()
 
     const [message, setMessage] = useState(`Welcome ${username.toLocaleUpperCase()}. A new deck has been shuffled; please, start a new hand!`)
 
@@ -153,7 +152,12 @@ const Game = ({ username }:GameProps): JSX.Element => {
 
     return (
         <div className="GameScreenComponent container columns">
-            <GameBoard></GameBoard>
+            <GameBoard
+                bankerCards={bankerCards}
+                playerCards={playerCards}
+                bankerScore={bankerScore}
+                playerScore={playerScore}
+            ></GameBoard>
             
             <div className="GameScreenComponent_game-menu column is-one-quarter">
                 {

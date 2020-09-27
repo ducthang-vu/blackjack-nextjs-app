@@ -10,6 +10,13 @@ interface semiBoardProps {
     score: number|string
 }
 
+interface GameBoardProps {
+    bankerCards: cardInterface[],
+    playerCards: cardInterface[],
+    bankerScore: number|string|null,
+    playerScore: number|string|null
+}
+
 const SemiBoard = ({ cards, actor, score }:semiBoardProps):JSX.Element => {
     return useMemo(() => 
             <div className="SemiBoardComponent">
@@ -35,11 +42,13 @@ const SemiBoard = ({ cards, actor, score }:semiBoardProps):JSX.Element => {
         )
 }
 
-const GameBoard = ():JSX.Element => {
-    const bankerCards = useSelector<stateInterface, cardInterface[]>(state => state.game.current_hand.banker)
-    const playerCards = useSelector<stateInterface, cardInterface[]>(state => state.game.current_hand.player)
-    const bankerScore = useSelector<stateInterface, number|string>(state => state.game.current_hand.bankerScore)
-    const playerScore = useSelector<stateInterface, number|string>(state => state.game.current_hand.playerScore)
+const GameBoard = (
+    {
+        bankerCards, 
+        playerCards, 
+        bankerScore, 
+        playerScore
+    }:GameBoardProps):JSX.Element => {
 
     return (
             <div className="GameBoardComponent column">
@@ -56,8 +65,36 @@ const GameBoard = ():JSX.Element => {
                             score={playerScore}
                         ></SemiBoard>
                     </React.Fragment>:
-                    <h1>Start the game!</h1>
+                    <div className="no-cards-screen-message has-text-centered">
+                        <h1>Welcome!</h1>
+                        <p>Use the menu on the right to play the game.</p>
+                    </div>
                 }
+                <style jsx>{`
+                    .GameBoardComponent {
+                        position: relative;
+                        margin: 15px;
+                        border-radius: 10px;
+                        border: 1px solid red;
+                    }
+
+                    .no-cards-screen-message {
+                        position: absolute;
+                        left: 50%;
+                        top: 50%;
+                        transform: translate(-50%, -50%);
+                    }
+
+                    h1 {
+                        font-size: 200%;
+                        font-weight: bold;
+                    }
+
+                    p {
+                        font-size: 150%;
+                    }
+                `}
+                </style>
             </div>
         )
 }

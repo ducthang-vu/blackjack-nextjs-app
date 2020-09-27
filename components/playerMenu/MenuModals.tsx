@@ -27,7 +27,7 @@ const MenuModals = (props:props):JSX.Element => {
             <style jsx>{`
                 .MenuModalsComponent {
                     margin-top: 25px;
-                    min-height: 200px;
+                    height: 280px;
                     border: 1px solid red;
                     border-radius: 10px;
                 }
