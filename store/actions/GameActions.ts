@@ -101,7 +101,8 @@ const doPlayerStay = () => dispatch => {
 }
 
 const bankerDraw = () => async (dispatch, getState) => {
-    const { game: { deck } }:storeInterface = getState()
+    const { game: { deck , current_hand: { phase }}}:storeInterface = getState()
+    checkPhase(StartHand, [BankerAction], phase)
     const { data: { cards, remaining } } = await drawCards(deck)
     dispatch({
         type: BankerDraw,
