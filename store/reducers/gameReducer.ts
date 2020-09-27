@@ -99,9 +99,11 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
         case PlayerDraw:
             draft.current_hand.player.push(payload.newCard)
             updateScore(draft)
-            if (['busted', 21].includes(draft.current_hand.playerScore)) {
+            if (draft.current_hand.playerScore === 'busted') {
                 draft.current_hand.winner = 'banker'
                 draft.current_hand.phase = GameEnded
+            } else if (draft.current_hand.playerScore === 21) {
+                draft.current_hand.phase = BankerAction
             } else {
                 draft.current_hand.phase = UserAction
             }
