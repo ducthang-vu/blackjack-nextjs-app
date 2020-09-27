@@ -5,6 +5,8 @@ This is a Next.js and Redux application which implementes the most famous game o
 First, run the development server:
 
 ```bash
+npm install
+
 npm run dev
 ```
 
