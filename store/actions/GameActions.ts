@@ -4,8 +4,10 @@ import { state as storeInterface } from '../store'
 
 
 /**  CONSTANTS */
-const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = ActionTypes
-const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
+const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, 
+        PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = ActionTypes
+const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction, 
+        BankerAction, Endgame, GameEnded } = GamePhases
 const base_url:string = 'https://deckofcardsapi.com/api'
 
 
@@ -22,7 +24,9 @@ const drawCards = (deck_id:string, number_of_cards:number=1, baseUrl:string=base
 
 /** ACTIONS */
 const startHand = () => async (dispatch, getState) => {
-    const { game: { deck, isLastOfDeck, current_hand: { phase } }}:storeInterface = getState()
+    const { game: { deck, 
+                    isLastOfDeck, 
+                    current_hand: { phase } }}:storeInterface = getState()
     checkPhase(StartHand, [PreGame, GameEnded], phase)
     let new_deck:string
     if (isLastOfDeck) {
@@ -40,6 +44,8 @@ const startHand = () => async (dispatch, getState) => {
 }
 
 const makeBet = (ammount:number) => dispatch => {
+    const { game: { current_hand: { phase } }}:storeInterface = getState()
+    checkPhase(StartHand, [BettinStage], phase)
     dispatch({
         type: MakeBet, 
         payload: {
@@ -50,7 +56,8 @@ const makeBet = (ammount:number) => dispatch => {
 }
 
 const doInitialDeal = () => async (dispatch, getState) => {
-    const { game: { deck } }:storeInterface = getState()
+    const { game: { deck, current_hand: { phase }} }:storeInterface = getState()
+    checkPhase(StartHand, [InitialDraw], phase)
     const { data: { cards, remaining } } = await drawCards(deck, 4)
     dispatch({
         type: InitialDeal, 
@@ -64,6 +71,8 @@ const doInitialDeal = () => async (dispatch, getState) => {
 }
 
 const doSurrender = () => dispatch => {
+    const { game: { current_hand: { phase } }}:storeInterface = getState()
+    checkPhase(StartHand, [FirstUserAction], phase)
     dispatch({
         type: Surrender,
         payload: {new_phase: GameEnded},
@@ -106,4 +115,5 @@ const doEndgame = () => dispatch => {
 }
 
 
-export { startHand, makeBet, doInitialDeal, doSurrender, playerDraw, doPlayerStay, bankerDraw, doEndgame }
+export { startHand, makeBet, doInitialDeal, doSurrender, 
+        playerDraw, doPlayerStay, bankerDraw, doEndgame }
