@@ -34,7 +34,7 @@ const GameBoard = (
                                 <span>{bankerScore}</span>
                             </div>
                         </div>
-                        <p>Blacjack pays 3 to 2 - &spades; &clubs; &hearts; &diams; - Dealer stands on all 17</p>
+                        <p>Blacjack pays 3 to 2 - &spades; &clubs; &hearts; &diams; - Dealer stands on all 17s</p>
                         <div className="half-board player-half">
                             {playerCards.map(card => 
                                 <Card

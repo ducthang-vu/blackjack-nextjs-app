@@ -9,7 +9,8 @@ export default function Rules() {
                     <div className="column is-half is-offset-one-quarter">
                         <h1 className="title has-text-centered">Info & implementation notes</h1>
                         <ul className="list">
-                            <li>This is a next.js application, build also with TypeScript and Redux.</li>
+                            <li>This is a Next.js and Redux application.</li>
+                            <li>Better animations will be provided.</li>
                             <li>Insurance will be added to the game.</li>
                         </ul>
                     </div>
