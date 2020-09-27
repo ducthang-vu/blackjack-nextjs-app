@@ -1,11 +1,11 @@
 import axios from 'axios'
-import { ActionTypes, GamePhases } from '../constants'
+import { GameActionTypes, GamePhases } from '../constants'
 import { state as storeInterface } from '../store'
 
 
 /**  CONSTANTS */
 const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, 
-        PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = ActionTypes
+        PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = GameActionTypes
 const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction, 
         BankerAction, Endgame, GameEnded } = GamePhases
 const base_url:string = 'https://deckofcardsapi.com/api'

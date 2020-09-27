@@ -1,4 +1,4 @@
-enum ActionTypes {
+enum GameActionTypes {
     StartHand = 'StartHand',
     MakeBet = 'MakeBet',
     InitialDeal = 'InitialDeal',
@@ -8,6 +8,11 @@ enum ActionTypes {
     PlayerStay = 'PlayerStay',
     BankerDraw = 'BankerDraw',
     EndgameAction = 'EndgameAction'
+}
+
+enum UserActionTypes {
+    SetUser = 'SetUser',
+    SetCredit ='SetCredit'
 }
 
 enum GamePhases {
@@ -21,4 +26,4 @@ enum GamePhases {
     GameEnded = 'GameEnded'
 }
 
-export { ActionTypes, GamePhases }
+export { GameActionTypes, UserActionTypes, GamePhases }

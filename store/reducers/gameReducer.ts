@@ -1,7 +1,8 @@
+import produce from 'immer'
 import { card as cardInterface} from '../../utils/interfaces'
 import { getScore, evaluateResult } from '../../utils/functions'
-import { ActionTypes, GamePhases } from '../constants'
-import produce from 'immer'
+import { GameActionTypes, GamePhases } from '../constants'
+
 
 
 /** Interfaces */
@@ -31,7 +32,7 @@ interface action {
 
 /** Constants */
 const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, 
-        PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = ActionTypes
+        PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = GameActionTypes
 const { PreGame, FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
 
 const initialState:stateInterface = {
@@ -78,7 +79,7 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
         case InitialDeal:
             draft.current_hand.player = payload.newPlayerCards
             draft.current_hand.banker = payload.newBankerCards
-            draft.isLastOfDeck = payload.remaining > 40
+            draft.isLastOfDeck = payload.remaining < 40
             updateScore(draft)
             if (
                 draft.current_hand.playerScore === 'blackjack' && 
@@ -147,5 +148,5 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
 }, initialState)
 
 
-export type { stateInterface as state }
+export type { stateInterface }
 export { gameReducer }

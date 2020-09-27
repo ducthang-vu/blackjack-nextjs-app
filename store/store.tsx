@@ -1,7 +1,7 @@
 import { combineReducers, createStore, applyMiddleware, compose, Reducer  } from 'redux'
 import thunk from 'redux-thunk'
-import { state as userState, userReducer } from './reducers/userReducer'
-import { state as gameState, gameReducer } from './reducers/gameReducer'
+import { stateInterface as userState, userReducer } from './reducers/userReducer'
+import { stateInterface as gameState, gameReducer } from './reducers/gameReducer'
 import { GamePhases } from './constants'
 
 interface state {

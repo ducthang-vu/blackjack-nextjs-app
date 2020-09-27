@@ -1,6 +1,11 @@
-interface state {
+import produce from 'immer'
+import { UserActionTypes } from '../constants'
+
+const { SetUser, SetCredit } = UserActionTypes
+
+interface stateInterface {
     username: string,
-    credits: number
+    credits: number|null
 }
 
 interface action {
@@ -8,28 +13,22 @@ interface action {
     payload: any
 }
 
-const initialState:state = {
+const initialState:stateInterface = {
     username: null,
     credits: null
 }
-
-const userReducer = (state:state=initialState, action:action):state => {
-    switch (action.type) {
-        case 'setUser':
-            return {
-                ...state,
-                username: action.payload.username,
-                credits: action.payload.credits
-            }
-        case 'setCredit':
-            return {
-                ...state,
-                credits: state.credits + action.payload
-            }
-        default:
-            return state
+const userReducer = produce((draft:stateInterface, action:action) => {
+    const { type, payload } = action
+    switch (type) {
+        case SetUser:
+            draft.username = payload.username
+            draft.credits = payload.credits
+            break
+        case SetCredit:
+            draft.credits += payload
+            break
     }
-}
+}, initialState)
 
-export type { state }
+export type { stateInterface }
 export { userReducer }
