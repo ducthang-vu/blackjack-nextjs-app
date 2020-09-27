@@ -150,7 +150,7 @@ const Game = ({ username }:GameProps): JSX.Element => {
             setMessage(`Banker is drawing...!`) // must be optimized
             setTimeout(() => dispatch(bankerDraw()), 1500)
         }
-    }, [bankerScore])
+    }, [bankerCards.length])
 
     return (
         <div className="GameScreenComponent container columns">
