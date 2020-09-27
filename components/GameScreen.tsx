@@ -58,6 +58,11 @@ const Game = ({ username }:GameProps): JSX.Element => {
         ['Stand', () => dispatch(doPlayerStay())]
     ]
 
+    const doDoubleDown = (currentPot:number) => {
+        setCredit(-currentPot)
+        dispatch(playerDraw(true))
+    }
+
     const potShow:number|null = [GameEnded, PreGame, BettinStage].includes(gamePhase) ? null : betPot
 
     useEffect(
@@ -93,7 +98,7 @@ const Game = ({ username }:GameProps): JSX.Element => {
                     break
                 case FirstUserAction:
                     setMessage(`Do your move!`)
-                    const doubleDown = ['Double Down', () => dispatch(playerDraw(true))]
+                    const doubleDown = ['Double Down', () => doDoubleDown(betPot)]
                     const surrenderButton = ['Surrender', () => dispatch(doSurrender())]
                     const buttonsInitialAction = standardButton
                     if ([10, 11].includes(Number(playerScore))) {

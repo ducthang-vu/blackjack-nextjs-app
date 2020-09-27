@@ -112,6 +112,7 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
         case DoubleDown:
             draft.current_hand.player.push(payload.newCard)
             updateScore(draft)
+            draft.current_hand.ammountBet *= 2
             if (draft.current_hand.playerScore === 'busted') {
                 draft.current_hand.winner = 'banker'
                 draft.current_hand.phase = GameEnded
