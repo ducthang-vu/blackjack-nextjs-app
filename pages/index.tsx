@@ -7,12 +7,12 @@ import GameScreen from '../components/GameScreen'
 import { state } from '../store/store'
 
 export default function Home() {
-  const username = useSelector<state, string>(state => state.user.username)
+  const username:string|null = useSelector<state, string>(state => state.user.username)
 
   return (
     <Layout>
       {username ?
-        <GameScreen currentName={username}></GameScreen>:
+        <GameScreen username={username}></GameScreen>:
         <SignIn></SignIn>
       }
     </Layout>

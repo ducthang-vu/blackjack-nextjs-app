@@ -13,9 +13,9 @@ interface stateInterface {
         player: cardInterface[],
         bankerScore: string|number,
         playerScore: string|number,
-        ammountBet: number,
-        phase: string,
-        winner: string
+        ammountBet: number|null,
+        phase: string|null,
+        winner: string|null
     }
 }
 
@@ -32,13 +32,13 @@ interface action {
 /** Constants */
 const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, 
         PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = ActionTypes
-const { FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
+const { PreGame, FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
 
 const initialState:stateInterface = {
         deck: null,
         isLastOfDeck: true,
         current_hand: {
-            phase: 'pre-game',
+            phase: PreGame,
             banker: [],
             player: [],
             bankerScore: null,
@@ -62,10 +62,13 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
     switch (type) {
         case StartHand:
             draft.deck = payload.deck
+            draft.isLastOfDeck = payload.isLastOfDeck
             draft.current_hand.phase = payload.new_phase
+            break
         case MakeBet:
-            draft.current_hand.ammountBet
+            draft.current_hand.ammountBet = payload.ammount
             draft.current_hand.phase = payload.new_phase
+            break
         case InitialDeal:
             draft.current_hand.player = payload.newPlayerCards
             draft.current_hand.banker = payload.newBankerCards
@@ -82,9 +85,11 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
             } else {
                 draft.current_hand.phase = FirstUserAction
             }
+            break
         case Surrender:
             draft.current_hand.winner = 'banker'
             draft.current_hand.phase = GameEnded
+            break
         case PlayerDraw:
             draft.current_hand.player.push(payload.newCard)
             updateScore(draft)
@@ -94,12 +99,15 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
             } else {
                 draft.current_hand.phase = UserAction
             }
+            break
         case DoubleDown:
             draft.current_hand.player.push(payload.newCard)
             updateScore(draft)
             draft.current_hand.phase = BankerAction
+            break
         case PlayerStay:
             draft.current_hand.phase = BankerAction
+            break
         case BankerDraw:
             draft.current_hand.banker.push(payload.newCard)
             updateScore(draft)
@@ -112,9 +120,11 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
                 } else {
                     draft.current_hand.phase = Endgame
                 }
+            break
         case EndgameAction:
             draft.current_hand.winner = evaluateResult(draft.current_hand.playerScore, draft.current_hand.bankerScore)
             draft.current_hand.phase = GameEnded
+            break
     }
 }, initialState)
 

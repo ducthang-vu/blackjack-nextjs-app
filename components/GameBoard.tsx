@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import CardContainer from './CardContainer'
 import { card as cardInterface } from '../utils/interfaces'
@@ -43,16 +43,21 @@ const GameBoard = ():JSX.Element => {
 
     return (
             <div className="GameBoardComponent column">
-                <SemiBoard
-                    cards={bankerCards}
-                    actor="banker"
-                    score={bankerScore}
-                ></SemiBoard>
-                <SemiBoard
-                    cards={playerCards}
-                    actor="player"
-                    score={playerScore}
-                ></SemiBoard>
+                {playerCards.length ?
+                    <React.Fragment>
+                        <SemiBoard
+                            cards={bankerCards}
+                            actor="banker"
+                            score={bankerScore}
+                        ></SemiBoard>
+                        <SemiBoard
+                            cards={playerCards}
+                            actor="player"
+                            score={playerScore}
+                        ></SemiBoard>
+                    </React.Fragment>:
+                    <h1>Start the game!</h1>
+                }
             </div>
         )
 }

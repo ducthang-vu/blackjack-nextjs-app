@@ -29,21 +29,24 @@ const startHand = () => async (dispatch, getState) => {
                     current_hand: { phase } }}:storeInterface = getState()
     checkPhase(StartHand, [PreGame, GameEnded], phase)
     let new_deck:string
+    let new_isLastOfDeck:boolean = isLastOfDeck
     if (isLastOfDeck) {
         const { data: {deck_id} } = await axios.get(base_url + '/deck/new/shuffle/?deck_count=6')
         await axios.get(base_url + `/deck/${deck_id}/draw/?count=20`)
         new_deck = deck_id
+        new_isLastOfDeck = false
     }
     dispatch({ 
                 type: StartHand, 
                 payload: {
                     deck: new_deck || deck,
+                    isLastOfDeck: new_isLastOfDeck,
                     new_phase: BettinStage
                 }
         })
 }
 
-const makeBet = (ammount:number) => dispatch => {
+const makeBet = (ammount:number) => (dispatch, getState) => {
     const { game: { current_hand: { phase } }}:storeInterface = getState()
     checkPhase(StartHand, [BettinStage], phase)
     dispatch({
@@ -63,14 +66,14 @@ const doInitialDeal = () => async (dispatch, getState) => {
         type: InitialDeal, 
         payload: {
             newPlayerCards: [cards[1], cards[3]],
-            newBankerCards: cards[2],
+            newBankerCards: [cards[2]],
             remaining,
             new_phase: [FirstUserAction, BankerAction, Endgame]
         }
     })
 }
 
-const doSurrender = () => dispatch => {
+const doSurrender = () => (dispatch, getState) => {
     const { game: { current_hand: { phase } }}:storeInterface = getState()
     checkPhase(StartHand, [FirstUserAction], phase)
     dispatch({

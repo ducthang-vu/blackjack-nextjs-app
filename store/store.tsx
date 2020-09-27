@@ -2,6 +2,7 @@ import { combineReducers, createStore, applyMiddleware, compose, Reducer  } from
 import thunk from 'redux-thunk'
 import { state as userState, userReducer } from './reducers/userReducer'
 import { state as gameState, gameReducer } from './reducers/gameReducer'
+import { GamePhases } from './constants'
 
 interface state {
     user: userState,
@@ -17,7 +18,7 @@ const initialState:state = {
         deck: null,
         isLastOfDeck: true,
         current_hand: {
-            phase: 'pre-game',
+            phase: GamePhases.PreGame,
             ammountBet: null,
             banker: [],
             player: [],
