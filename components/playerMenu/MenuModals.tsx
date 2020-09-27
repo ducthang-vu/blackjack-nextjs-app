@@ -9,7 +9,6 @@ interface props {
 }
 
 const MenuModals = (props:props):JSX.Element => {
-    console.log(props.buttons)
     return(
         <div>
             <div className="MenuModalsComponent card m-4">

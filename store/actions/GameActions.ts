@@ -106,7 +106,7 @@ const bankerDraw = () => async (dispatch, getState) => {
     dispatch({
         type: BankerDraw,
         payload: {
-            new_card: cards[0],
+            newCard: cards[0],
             remaining,
             new_phase: [BankerAction, Endgame]
         }

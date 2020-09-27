@@ -5,14 +5,14 @@ import GameBoard from './GameBoard'
 import MenuHead from './playerMenu/MenuHead'
 import MenuModals from './playerMenu/MenuModals'
 
-import { ActionTypes, GamePhases } from '../store/constants'
+import { card as cardInterface} from '../utils/interfaces'
+
+import { GamePhases } from '../store/constants'
 import { setCredit } from '../store/actions/userActions'
 import { startHand, makeBet, doInitialDeal, doSurrender, 
         playerDraw, doPlayerStay, bankerDraw, doEndgame } from '../store/actions/GameActions'
 
-
 import { state as stateInterface } from '../store/store'
-import BettingMenu from './BettingMenu'
 
 
 interface GameProps {
@@ -31,6 +31,8 @@ const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction,
 const Game = ({ username }:GameProps): JSX.Element => {
     const credits = useSelector<stateInterface, number>(state => state.user.credits)
     const gamePhase = useSelector<stateInterface, string>(state => state.game.current_hand.phase)
+    const bankerCards = useSelector<stateInterface, cardInterface[]>(state => state.game.current_hand.banker)
+    const playerCards = useSelector<stateInterface, cardInterface[]>(state => state.game.current_hand.player)
     const bankerScore = useSelector<stateInterface, number|string>(state => state.game.current_hand.bankerScore)
     const playerScore = useSelector<stateInterface, number|string>(state => state.game.current_hand.playerScore)
     const betPot = useSelector<stateInterface, number>(state => state.game.current_hand.ammountBet)
@@ -39,12 +41,16 @@ const Game = ({ username }:GameProps): JSX.Element => {
     const [intervalActive, setIntervalActive] = useState<NodeJS.Timer|null>(null)
 
     const [message, setMessage] = useState(`Welcome ${username.toLocaleUpperCase()}. A new deck has been shuffled; please, start a new hand!`)
-    const [buttons, setButtons] = useState<button[]>([
+    
+
+    const startButtons:button[] = [
         {
             label: 'Start new hand', 
             handler: () => dispatch(startHand())
         }
-    ])
+    ]
+
+    const [buttons, setButtons] = useState<button[]>(startButtons)
 
     const buttonsFactory = (list:Array<any>):button[] => {
         return list.map(item => ({label: item[0], handler: item[1]}))
@@ -54,7 +60,7 @@ const Game = ({ username }:GameProps): JSX.Element => {
         ['Hit', () => dispatch(playerDraw())],
         ['Stand', () => dispatch(doPlayerStay())]
     ]
-    
+
     useEffect(
         () => {
             switch (gamePhase) {
@@ -98,58 +104,54 @@ const Game = ({ username }:GameProps): JSX.Element => {
                     setButtons(buttonsFactory(buttonsInitialAction))
                     break
                 case BankerAction:
+                    setButtons(null)
                     setMessage(`Banker is drawing...!`)
                     setTimeout(() => dispatch(bankerDraw()), 1500)
+                    break
+                case UserAction:
+                    setMessage(`Your score is ${playerScore}. Make your move: hit or stand?`)
+                    setButtons(buttonsFactory(standardButton))
+                    break
                 case Endgame:
+                    setTimeout(dispatch(doEndgame()), 1500)
                     break
-                /*
-                case 'first-deal':
-                    setMessage(`Your posted is $${betPot}.`);
-                    setTimeout(() => dispatch(dealCard(true)), 1500)
-                    setTimeout(() => dispatch(dealCard(false)), 3000)
-                    setTimeout(() => dispatch(dealCard(true)), 4500)
-                    break
-                case 'player-action':
-                    setMessage(`Your score is ${playerScore}, hit or stand?`)
-                    break
-                case 'banker-action':
-                    const intervalActiveId:NodeJS.Timer = setInterval(() => dispatch(dealCard(false)), 1500)
-                    setIntervalActive(intervalActiveId)
-                    break
-                case 'endgame':
-                    if (intervalActive) {
-                        clearInterval(intervalActive)
+                case GameEnded:
+                    const baseMessage =  'You can start a new hand!'
+                    if (winner === 'banker' && bankerCards.length === 1 && playerScore !== 'busted') {
+                        const halfPot:number = betPot / 2
+                        dispatch(setCredit(halfPot))
+                        setMessage(`You have surrendered! Half pot ($${halfPot}) is back to you. ` + baseMessage)
+                    } else {
+                        switch (winner) {
+                            case 'player':
+                                const winningAmmount = playerScore === 'blackjack' ? 2.5 * betPot : 2 * betPot
+                                dispatch(setCredit(winningAmmount))
+                                setMessage(`You have been awarded $${winningAmmount}, congratulations!`)
+                                break
+                            case 'banker':
+                                setMessage(`You lost, try again!`)
+                                break
+                            case 'tie':
+                                setMessage(`The game is a tie, you have $${betPot} back!`)
+                                dispatch(setCredit(betPot))
+                                break
+                        }
                     }
-                    dispatch(endgame())
+                    setButtons(startButtons)
                     break
-                case 'game-ended': 
-                    switch (winner) {
-                        case 'player':
-                            const winningAmmount = playerScore === 'blackjack' ? 2.5 * betPot : 2 * betPot
-                            dispatch(setCredit(winningAmmount))
-                            setMessage(`You have been awarded $${winningAmmount}, congratulations!`)
-                            break
-                        case 'banker':
-                            setMessage(`You lost.`)
-                            break
-                        case 'tie':
-                            setMessage(`The game is a tie, you have $${betPot} back!`)
-                            dispatch(setCredit(betPot))
-                            break
-                    }
-                    break
-                */
                 default:
                     throw `${gamePhase} is not a valid phase`
             }
         }
         , [gamePhase]
     )
-        /*
-    const setPlayerBet = (qty:number): void => {
-        dispatch(setCredit(-qty))
-        dispatch(setBet(qty))
-    }*/
+
+    useEffect(() => {
+        if (gamePhase === BankerAction) {
+            setMessage(`Banker is drawing...!`) // must be optimized
+            setTimeout(() => dispatch(bankerDraw()), 1500)
+        }
+    }, [bankerScore])
 
     return (
         <div className="GameScreenComponent container columns">
@@ -168,27 +170,6 @@ const Game = ({ username }:GameProps): JSX.Element => {
                     message={message}
                     buttons={buttons}
                 ></MenuModals>
-
-                {/*
-                <div className="GameScreenComponent_game-menu__modal">
-                    {gamePhase === 'player-bet' && <BettingMenu setPlayerBet={setPlayerBet}></BettingMenu>}
-                    {gamePhase === 'player-action' && 
-                        <ul>
-                            <button className="button is-primary" onClick={() => dispatch(playerStay())}>Stay</button>
-                            <button className="button is-primary" onClick={() => dispatch(dealCard(true))}>Draw</button>
-                        </ul>
-                    }
-                    {gamePhase === 'game-ended' && 
-                        <button onClick={() => dispatch(startNewHand())}>Start a new hand</button>
-                    }
-                    <div>
-                        {gamePhase === 'endgame' && 'finished'}
-                    </div>
-                </div>
-                <div className="GameScreenComponent_game-menu__credit">
-                    Your credit: ${playerCredit.toFixed(2)}
-                </div>
-                */}
             </div>
             <style>{`
                 .GameScreenComponent {

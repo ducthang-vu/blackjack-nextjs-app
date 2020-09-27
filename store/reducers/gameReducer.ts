@@ -64,6 +64,12 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
             draft.deck = payload.deck
             draft.isLastOfDeck = payload.isLastOfDeck
             draft.current_hand.phase = payload.new_phase
+            draft.current_hand.banker = []
+            draft.current_hand.player = []
+            draft.current_hand.bankerScore = null
+            draft.current_hand.playerScore = null
+            draft.current_hand.ammountBet = null
+            draft.current_hand.winner = null
             break
         case MakeBet:
             draft.current_hand.ammountBet = payload.ammount
@@ -99,11 +105,18 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
             } else {
                 draft.current_hand.phase = UserAction
             }
+            draft.isLastOfDeck = payload.remaining > 40
             break
         case DoubleDown:
             draft.current_hand.player.push(payload.newCard)
             updateScore(draft)
-            draft.current_hand.phase = BankerAction
+            if (draft.current_hand.playerScore === 'busted') {
+                draft.current_hand.winner = 'banker'
+                draft.current_hand.phase = GameEnded
+            } else {
+                draft.current_hand.phase = BankerAction
+            }
+            draft.isLastOfDeck = payload.remaining > 40
             break
         case PlayerStay:
             draft.current_hand.phase = BankerAction
@@ -112,14 +125,16 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
             draft.current_hand.banker.push(payload.newCard)
             updateScore(draft)
             let { current_hand: {bankerScore }} = draft
-            if (bankerScore >= 17 ||
+            if (
+                bankerScore >= 17 ||
                 ['blackjack', 'busted'].includes(String(bankerScore)) ||
                 draft.current_hand.playerScore === 'blackjack'
-                ) {
-                    draft.current_hand.phase = Endgame
-                } else {
-                    draft.current_hand.phase = Endgame
-                }
+            ) {
+                draft.current_hand.phase = Endgame
+            } else {
+                draft.current_hand.phase = BankerAction
+            }
+            draft.isLastOfDeck = payload.remaining > 40
             break
         case EndgameAction:
             draft.current_hand.winner = evaluateResult(draft.current_hand.playerScore, draft.current_hand.bankerScore)
