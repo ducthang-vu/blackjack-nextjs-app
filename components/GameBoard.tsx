@@ -1,47 +1,14 @@
 import React, { useMemo } from 'react'
-import { useSelector } from 'react-redux'
-import CardContainer from './CardContainer'
 import { card as cardInterface } from '../utils/interfaces'
-import { state as stateInterface } from '../store/store'
+import Card from './Card'
 
-interface semiBoardProps {
-    cards: cardInterface[],
-    actor: string,
-    score: number|string
-}
 
 interface GameBoardProps {
     bankerCards: cardInterface[],
     playerCards: cardInterface[],
     bankerScore: number|string|null,
-    playerScore: number|string|null
+    playerScore: number|string|null,
 }
-
-const SemiBoard = ({ cards, actor, score }:semiBoardProps):JSX.Element => {
-    return useMemo(() => 
-            <div className="SemiBoardComponent">
-                {<CardContainer cards={cards}></CardContainer>}
-                {score !== null ? 
-                    <p className="SemiBoardComponent__score">{actor}'s' score: {score}</p>: null
-                }
-                
-                <style jsx>{`
-                    .SemiBoardComponent {
-                        height: 50%;
-                        position: relative;
-                    }
-
-                    .SemiBoardComponent__score {
-                        position: absolute;
-                        top: 75px;
-                        left: 250px;
-                    }
-                `}</style>
-            </div>,
-            [cards, actor, score]
-        )
-}
-
 const GameBoard = (
     {
         bankerCards, 
@@ -51,20 +18,38 @@ const GameBoard = (
     }:GameBoardProps):JSX.Element => {
 
     return (
-            <div className="GameBoardComponent column">
+            <div className="GameBoardComponent column has-text-centered">
                 {playerCards.length ?
                     <React.Fragment>
-                        <SemiBoard
-                            cards={bankerCards}
-                            actor="banker"
-                            score={bankerScore}
-                        ></SemiBoard>
-                        <SemiBoard
-                            cards={playerCards}
-                            actor="player"
-                            score={playerScore}
-                        ></SemiBoard>
+                        <div className="half-board banker-half">
+                            {bankerCards.map(card => 
+                                <Card
+                                    image={card.image}
+                                    value={card.value}
+                                    suit={card.suit}
+                                    code={card.code}
+                                ></Card>
+                            )}
+                            <div className="score-box">
+                                <span>{bankerScore}</span>
+                            </div>
+                        </div>
+                        <p>Blacjack pays 3 to 2 - &spades; &clubs; &hearts; &diams; - Dealer stands on all 17</p>
+                        <div className="half-board player-half">
+                            {playerCards.map(card => 
+                                <Card
+                                    image={card.image}
+                                    value={card.value}
+                                    suit={card.suit}
+                                    code={card.code}
+                                ></Card>
+                            )}
+                            <div className="score-box">
+                                <span>{playerScore}</span>
+                            </div> 
+                        </div>
                     </React.Fragment>:
+
                     <div className="no-cards-screen-message has-text-centered">
                         <h1>Welcome!</h1>
                         <p>Use the menu on the right to play the game.</p>
@@ -76,6 +61,9 @@ const GameBoard = (
                         margin: 15px;
                         border-radius: 10px;
                         border: 1px solid red;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
                     }
 
                     .no-cards-screen-message {
@@ -92,6 +80,18 @@ const GameBoard = (
 
                     p {
                         font-size: 150%;
+                    }
+                    
+                    .half-board {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                    }
+
+                    .score-box {
+                        margin: 10px;
+                        font-weight: bold;
+                        display: inline;
                     }
                 `}
                 </style>

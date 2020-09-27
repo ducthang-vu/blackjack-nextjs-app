@@ -177,6 +177,7 @@ const Game = ({ username }:GameProps): JSX.Element => {
                 .GameScreenComponent {
                     height: 100%;
                     width: 100%;
+                    margin: 0 auto;
                 }
             `}</style>
         </div>

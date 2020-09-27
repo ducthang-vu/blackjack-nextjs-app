@@ -8,8 +8,9 @@ const Card = (props:cardInterface):JSX.Element => {
                 {`
                     .CardComponent {
                         display: inline-block;
-                        height: 150px;
-                        width: 110px;
+                        height: 120px;
+                        width: 90px;
+                        margin: 5px;
                     }
 
                     .CardComponent__img {
