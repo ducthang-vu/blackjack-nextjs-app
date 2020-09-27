@@ -6,13 +6,12 @@ import MenuHead from './playerMenu/MenuHead'
 import MenuModals from './playerMenu/MenuModals'
 
 import { card as cardInterface} from '../utils/interfaces'
+import { state as stateInterface } from '../store/store'
 
 import { GamePhases } from '../store/constants'
 import { setCredit } from '../store/actions/userActions'
 import { startHand, makeBet, doInitialDeal, doSurrender, 
         playerDraw, doPlayerStay, bankerDraw, doEndgame } from '../store/actions/GameActions'
-
-import { state as stateInterface } from '../store/store'
 
 
 interface GameProps {
@@ -41,7 +40,6 @@ const Game = ({ username }:GameProps): JSX.Element => {
     const [intervalActive, setIntervalActive] = useState<NodeJS.Timer|null>(null)
 
     const [message, setMessage] = useState(`Welcome ${username.toLocaleUpperCase()}. A new deck has been shuffled; please, start a new hand!`)
-    
 
     const startButtons:button[] = [
         {
@@ -171,7 +169,7 @@ const Game = ({ username }:GameProps): JSX.Element => {
                     buttons={buttons}
                 ></MenuModals>
             </div>
-            <style>{`
+            <style jsx>{`
                 .GameScreenComponent {
                     height: 100%;
                     width: 100%;

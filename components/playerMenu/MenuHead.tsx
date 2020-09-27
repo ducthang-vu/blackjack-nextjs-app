@@ -14,6 +14,7 @@ const MenuHead = ({ username, credits }:props):JSX.Element => {
             </div>
             <style>{`
                 .MenuHeadComponent.card {
+                    margin-bottom: 25px;
                     border: 1px solid red;
                     border-radius: 10px;
                 }
