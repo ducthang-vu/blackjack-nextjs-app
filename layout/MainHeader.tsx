@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { link as linkInterface } from '../utils/interfaces'
+import { Link as linkInterface } from "../core-data/Link"
 
 interface props {
     links: linkInterface[]

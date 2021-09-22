@@ -1,44 +1,18 @@
-import { combineReducers, createStore, applyMiddleware, compose, Reducer  } from 'redux'
-import thunk from 'redux-thunk'
-import { stateInterface as userState, userReducer } from './reducers/userReducer'
-import { stateInterface as gameState, gameReducer } from './reducers/gameReducer'
-import { GamePhases } from './constants'
-
-interface state {
-    user: userState,
-    game: gameState
-}
-
-const initialState:state = { 
-    user: {
-        username: null,
-        credits: null, 
-    },
-    game: {
-        deck: null,
-        isLastOfDeck: true,
-        current_hand: {
-            phase: GamePhases.PreGame,
-            ammountBet: null,
-            banker: [],
-            player: [],
-            bankerScore: null,
-            playerScore: null,
-            winner: null,
-        }
-    }
-}
+import { configureStore } from '@reduxjs/toolkit'
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
+import { userReducer } from './reducers/userReducer'
+import { gameReducer } from './reducers/gameReducer'
 
 
-const composeEnhancer = typeof window != 'undefined'
-    && window['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__']  as typeof compose || compose
-const reducer:Reducer = combineReducers(
-    {
+const  store = configureStore({
+    reducer: {
         user: userReducer, 
         game: gameReducer
-    }
-)
-const store = createStore(reducer, initialState, composeEnhancer(applyMiddleware(thunk)))
+    },
+  })
 
+export type RootState = ReturnType<typeof store.getState>
+export type AppDispatch = typeof store.dispatch
 export default store
-export type { state }
+export const useAppDispatch = () => useDispatch<AppDispatch>()
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector

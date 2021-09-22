@@ -5,10 +5,10 @@ import GameBoard from './GameBoard'
 import MenuHead from './playerMenu/MenuHead'
 import MenuModals from './playerMenu/MenuModals'
 
-import { card as cardInterface} from '../utils/interfaces'
-import { state as stateInterface } from '../store/store'
+import { ICard } from '../core-data/ICard'
+import { RootState as stateInterface } from '../store/store'
 
-import { GamePhases } from '../store/constants'
+import { GamePhase } from '../core-data/GamePhase'
 import { setCredit } from '../store/actions/userActions'
 import { startHand, makeBet, doInitialDeal, doSurrender, 
         playerDraw, doPlayerStay, bankerDraw, doEndgame } from '../store/actions/GameActions'
@@ -24,14 +24,14 @@ interface button {
 }
 
 const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction, 
-        BankerAction, Endgame, GameEnded } = GamePhases
+        BankerAction, Endgame, GameEnded } = GamePhase
 
 
 const Game = ({ username }:GameProps): JSX.Element => {
     const credits = useSelector<stateInterface, number>(state => state.user.credits)
-    const gamePhase = useSelector<stateInterface, GamePhases>(state => state.game.current_hand.phase)
-    const bankerCards = useSelector<stateInterface, cardInterface[]>(state => state.game.current_hand.banker)
-    const playerCards = useSelector<stateInterface, cardInterface[]>(state => state.game.current_hand.player)
+    const gamePhase = useSelector<stateInterface, GamePhase>(state => state.game.current_hand.phase)
+    const bankerCards = useSelector<stateInterface, ICard[]>(state => state.game.current_hand.banker)
+    const playerCards = useSelector<stateInterface, ICard[]>(state => state.game.current_hand.player)
     const bankerScore = useSelector<stateInterface, number|string>(state => state.game.current_hand.bankerScore)
     const playerScore = useSelector<stateInterface, number|string>(state => state.game.current_hand.playerScore)
     const betPot = useSelector<stateInterface, number>(state => state.game.current_hand.ammountBet)

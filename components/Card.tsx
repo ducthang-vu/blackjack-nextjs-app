@@ -1,6 +1,6 @@
-import { card as cardInterface } from '../utils/interfaces'
+import { ICard } from '../core-data/ICard'
 
-const Card = (props:cardInterface):JSX.Element => {
+const Card = (props: ICard): JSX.Element => {
     return (
         <div className="CardComponent">
             <img className="CardComponent__img" src={props.image}></img>

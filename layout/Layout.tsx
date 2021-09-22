@@ -1,7 +1,7 @@
 import React from 'react';
 import MainHeader from './MainHeader'
 import MainFooter from './MainFooter'
-import { link as linkInterface } from '../utils/interfaces'
+import { Link as linkInterface } from "../core-data/Link";
 
 const Layout = (props: {children:JSX.Element}) => {
     const navLinks:linkInterface[] = [

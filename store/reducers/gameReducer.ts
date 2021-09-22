@@ -1,7 +1,8 @@
 import produce from 'immer'
-import { card as cardInterface} from '../../utils/interfaces'
+import { ICard } from '../../core-data/ICard'
+import { GamePhase } from '../../core-data/GamePhase'
 import { getScore, evaluateResult } from '../../utils/functions'
-import { GameActionTypes, GamePhases } from '../constants'
+import { GameActionTypes } from '../constants'
 
 
 
@@ -10,12 +11,12 @@ interface stateInterface {
     deck: string,
     isLastOfDeck: boolean
     current_hand: {
-        banker: cardInterface[],
-        player: cardInterface[],
+        banker: ICard[],
+        player: ICard[],
         bankerScore: string|number,
         playerScore: string|number,
         ammountBet: number|null,
-        phase: GamePhases|null,
+        phase: GamePhase|null,
         winner: string|null
     }
 }
@@ -23,7 +24,7 @@ interface stateInterface {
 interface action {
     type: string,
     payload: {
-        new_phase:GamePhases,
+        new_phase:GamePhase,
         [propName: string]: any;
     }
     [propName: string]: any;
@@ -33,7 +34,7 @@ interface action {
 /** Constants */
 const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, 
         PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = GameActionTypes
-const { PreGame, FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
+const { PreGame, FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhase
 
 const initialState:stateInterface = {
         deck: null,

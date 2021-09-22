@@ -1,4 +1,4 @@
-enum GameActionTypes {
+export enum GameActionTypes {
     StartHand = 'StartHand',
     MakeBet = 'MakeBet',
     InitialDeal = 'InitialDeal',
@@ -10,20 +10,7 @@ enum GameActionTypes {
     EndgameAction = 'EndgameAction'
 }
 
-enum UserActionTypes {
+export enum UserActionTypes {
     SetUser = 'SetUser',
     SetCredit ='SetCredit'
 }
-
-enum GamePhases {
-    PreGame = 'PreGame',
-    BettinStage = 'BettingStage',
-    InitialDraw = 'InitialDraw',
-    FirstUserAction = 'FirstUserAction',
-    UserAction = 'UserAction',
-    BankerAction = 'BankerAction',
-    Endgame = 'Endgame',
-    GameEnded = 'GameEnded'
-}
-
-export { GameActionTypes, UserActionTypes, GamePhases }

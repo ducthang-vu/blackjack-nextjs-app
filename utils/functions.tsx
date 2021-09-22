@@ -1,10 +1,10 @@
-import {card as cardInterface} from './interfaces'
+import { ICard } from '../core-data/ICard'
 
 /* GAME FUNCTIONS */
-function getBasicValue(faceValue:string):number {
-    const valueToNumber = Number(faceValue) 
-    const isNotNumber:boolean = isNaN(valueToNumber)
-    const courtValues:string[] = ['KING', 'QUEEN', 'JACK']
+export function getBasicValue(faceValue: string): number {
+    const valueToNumber = Number(faceValue)
+    const isNotNumber: boolean = isNaN(valueToNumber)
+    const courtValues: string[] = ['KING', 'QUEEN', 'JACK']
     if (isNotNumber && faceValue.toString().toLowerCase() === 'ace') {
         return 11
     } else if (courtValues.concat(courtValues.map(value => value.toLocaleLowerCase())).includes(faceValue)) {
@@ -15,10 +15,10 @@ function getBasicValue(faceValue:string):number {
     } else throw 'Card face value is not valid.'
 }
 
-function cardsSum(cards:cardInterface[]):number {
+export function cardsSum(cards: ICard[]): number {
     if (!cards.length) return 0
-    let values:number[] = cards.map(card => getBasicValue(card.value))
-    let result:number = values.reduce((x, y) => x + y)
+    let values: number[] = cards.map(card => getBasicValue(card.value))
+    let result: number = values.reduce((x, y) => x + y)
     while (result > 21 && values.some(value => value == 11)) {
         values.splice(values.findIndex(value => value == 11), 1, 1)
         result = values.reduce((x, y) => x + y)
@@ -26,19 +26,19 @@ function cardsSum(cards:cardInterface[]):number {
     return result
 }
 
-function getScore(cards:cardInterface[]) {
+export function getScore(cards: ICard[]) {
     const value = cardsSum(cards)
     if (value === 21 && cards.length === 2) return 'blackjack'
     if (value > 21) return 'busted'
     else return value
 }
 
-function evaluateResult(playerScore:string|number, bankerScore:string|number) {
+export function evaluateResult(playerScore: string | number, bankerScore: string | number) {
     if (playerScore === bankerScore) {
         return 'tie'
     }
-    if (playerScore === 'blackjack' || 
-        playerScore > bankerScore || 
+    if (playerScore === 'blackjack' ||
+        playerScore > bankerScore ||
         (playerScore !== 'busted' && bankerScore === 'busted')) {
         return 'player'
     } else {
@@ -47,18 +47,15 @@ function evaluateResult(playerScore:string|number, bankerScore:string|number) {
 }
 
 /** Cards factories */
-const makeCard = (value:string):cardInterface => ({
+export const makeCard = (value: string): ICard => ({
     "image": "fake",
     "value": value,
     "suit": 'fake',
     "code": 'fake'
 })
 
-const makeCards = (...args:string[]) => {
-    let result:cardInterface[] = []
+export const makeCards = (...args: string[]) => {
+    let result: ICard[] = []
     args.forEach(value => result.push(makeCard(value)))
     return result
 }
-
-
-export { getBasicValue, cardsSum, getScore, evaluateResult, makeCard, makeCards }

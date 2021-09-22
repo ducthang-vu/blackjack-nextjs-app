@@ -1,11 +1,11 @@
 import React from 'react'
-import { card as cardInterface } from '../utils/interfaces'
+import { ICard } from '../core-data/ICard'
 import Card from './Card'
 
 
 interface GameBoardProps {
-    bankerCards: cardInterface[],
-    playerCards: cardInterface[],
+    bankerCards: ICard[],
+    playerCards: ICard[],
     bankerScore: number|string|null,
     playerScore: number|string|null,
 }
