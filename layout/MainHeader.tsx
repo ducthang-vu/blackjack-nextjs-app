@@ -1,11 +1,13 @@
+import React from 'react'
 import Link from 'next/link'
+import ThemeToggle from '../components/ThemeToggle'
 import { link as linkInterface } from '../utils/interfaces'
 
 interface props {
     links: linkInterface[]
 }
 
-const MainHeader = ( { links }:props ):JSX.Element => {
+const MainHeader = ( { links }:props ):React.JSX.Element => {
     return (
         <header className="Main-Header">
             <div className="container navbar">
@@ -15,12 +17,12 @@ const MainHeader = ( { links }:props ):JSX.Element => {
                         <Link 
                             key={index}
                             href={path}
+                            className="navbar-item"
                         >
-                            <a className="navbar-item">
-                                <span>{label}</span>
-                            </a>
+                            <span>{label}</span>
                         </Link>
                     )}
+                    <ThemeToggle />
                 </nav>
             </div>
         </header>

@@ -1,4 +1,5 @@
-import produce from 'immer'
+import { produce } from 'immer'
+import { Reducer, UnknownAction } from 'redux'
 import { card as cardInterface} from '../../utils/interfaces'
 import { getScore, evaluateResult } from '../../utils/functions'
 import { GameActionTypes, GamePhases } from '../constants'
@@ -20,7 +21,7 @@ interface stateInterface {
     }
 }
 
-interface action {
+interface action extends UnknownAction {
     type: string,
     payload: {
         new_phase:GamePhases,
@@ -58,7 +59,7 @@ const updateScore = (draft:stateInterface) => {
 
 
 /** REDUCER */
-const gameReducer = produce((draft:stateInterface, action:action) => {
+const gameReducer: Reducer<stateInterface, UnknownAction> = produce((draft:stateInterface, action:action) => {
     const { type, payload } = action
     switch (type) {
         case StartHand:
@@ -130,7 +131,7 @@ const gameReducer = produce((draft:stateInterface, action:action) => {
             updateScore(draft)
             let { current_hand: {bankerScore }} = draft
             if (
-                bankerScore >= 17 ||
+                (typeof bankerScore === 'number' && bankerScore >= 17) ||
                 ['blackjack', 'busted'].includes(String(bankerScore)) ||
                 draft.current_hand.playerScore === 'blackjack'
             ) {

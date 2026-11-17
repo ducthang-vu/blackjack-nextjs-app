@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 
 import GameBoard from './GameBoard'
 import MenuHead from './playerMenu/MenuHead'
 import MenuModals from './playerMenu/MenuModals'
 
 import { card as cardInterface} from '../utils/interfaces'
-import { state as stateInterface } from '../store/store'
+import { state as stateInterface, useAppDispatch } from '../store/store'
 
 import { GamePhases } from '../store/constants'
 import { setCredit } from '../store/actions/userActions'
@@ -27,7 +27,7 @@ const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction,
         BankerAction, Endgame, GameEnded } = GamePhases
 
 
-const Game = ({ username }:GameProps): JSX.Element => {
+const Game = ({ username }:GameProps): React.JSX.Element => {
     const credits = useSelector<stateInterface, number>(state => state.user.credits)
     const gamePhase = useSelector<stateInterface, GamePhases>(state => state.game.current_hand.phase)
     const bankerCards = useSelector<stateInterface, cardInterface[]>(state => state.game.current_hand.banker)
@@ -36,7 +36,7 @@ const Game = ({ username }:GameProps): JSX.Element => {
     const playerScore = useSelector<stateInterface, number|string>(state => state.game.current_hand.playerScore)
     const betPot = useSelector<stateInterface, number>(state => state.game.current_hand.ammountBet)
     const winner = useSelector<stateInterface, string>(state => state.game.current_hand.winner)
-    const dispatch = useDispatch()
+    const dispatch = useAppDispatch()
 
     const [message, setMessage] = useState(`Welcome ${username.toLocaleUpperCase()}. A new deck has been shuffled; please, start a new hand!`)
 
@@ -117,7 +117,7 @@ const Game = ({ username }:GameProps): JSX.Element => {
                     setButtons(buttonsFactory(standardButton))
                     break
                 case Endgame:
-                    setTimeout(dispatch(doEndgame()), 1500)
+                    setTimeout(() => dispatch(doEndgame()), 1500)
                     break
                 case GameEnded:
                     const baseMessage =  'You can start a new hand!'

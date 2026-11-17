@@ -5,7 +5,7 @@ This is a Next.js and Redux application which implementes the most famous game o
 Try the application [here](https://blackjack-nextjs-app.vercel.app/).
 
 
-Alternatively you can download the repository, then run the development server:
+Alternatively you can download the repository, then run the development server (requires Node.js 20.9 or later):
 
 ```bash
 npm install

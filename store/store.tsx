@@ -1,5 +1,6 @@
-import { combineReducers, createStore, applyMiddleware, compose, Reducer  } from 'redux'
-import thunk from 'redux-thunk'
+import { combineReducers, legacy_createStore as createStore, applyMiddleware, compose, UnknownAction } from 'redux'
+import { thunk, ThunkDispatch } from 'redux-thunk'
+import { useDispatch } from 'react-redux'
 import { stateInterface as userState, userReducer } from './reducers/userReducer'
 import { stateInterface as gameState, gameReducer } from './reducers/gameReducer'
 import { GamePhases } from './constants'
@@ -32,7 +33,7 @@ const initialState:state = {
 
 const composeEnhancer = typeof window != 'undefined'
     && window['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__']  as typeof compose || compose
-const reducer:Reducer = combineReducers(
+const reducer = combineReducers(
     {
         user: userReducer, 
         game: gameReducer
@@ -40,5 +41,9 @@ const reducer:Reducer = combineReducers(
 )
 const store = createStore(reducer, initialState, composeEnhancer(applyMiddleware(thunk)))
 
+type AppDispatch = ThunkDispatch<state, unknown, UnknownAction>
+const useAppDispatch = useDispatch.withTypes<AppDispatch>()
+
 export default store
-export type { state }
+export { useAppDispatch }
+export type { state, AppDispatch }

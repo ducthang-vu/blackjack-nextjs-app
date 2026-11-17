@@ -1,6 +1,7 @@
+import React from 'react'
 import { card as cardInterface } from '../utils/interfaces'
 
-const Card = (props:cardInterface):JSX.Element => {
+const Card = (props:cardInterface):React.JSX.Element => {
     return (
         <div className="CardComponent">
             <img className="CardComponent__img" src={props.image}></img>

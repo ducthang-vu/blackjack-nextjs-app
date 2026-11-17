@@ -1,10 +1,11 @@
+import React from 'react'
 interface props {
     username: string,
     credits: number,
     currentPot: number|null,
 }
 
-const MenuHead = ({ username, credits, currentPot }:props):JSX.Element => {
+const MenuHead = ({ username, credits, currentPot }:props):React.JSX.Element => {
     return (
         <div className="MenuHeadComponent card m-4 has-text-centered">
             <header className="card-header">
