@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import ThemeToggle from '../components/ThemeToggle'
 import { link as linkInterface } from '../utils/interfaces'
 
 interface props {
@@ -21,6 +22,7 @@ const MainHeader = ( { links }:props ):React.JSX.Element => {
                             <span>{label}</span>
                         </Link>
                     )}
+                    <ThemeToggle />
                 </nav>
             </div>
         </header>
