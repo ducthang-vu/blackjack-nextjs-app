@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { useSelector } from 'react-redux'
 
 import GameBoard from './GameBoard'
 import MenuHead from './playerMenu/MenuHead'
 import MenuModals from './playerMenu/MenuModals'
 
 import { card as cardInterface} from '../utils/interfaces'
-import { state as stateInterface, useAppDispatch } from '../store/store'
+import { useAppDispatch, useAppSelector } from '../store/store'
 
 import { GamePhases } from '../store/constants'
-import { setCredit } from '../store/actions/userActions'
+import { changeCredits } from '../store/slices/userSlice'
 import { startHand, makeBet, doInitialDeal, doSurrender, 
         playerDraw, doPlayerStay, bankerDraw, doEndgame } from '../store/actions/GameActions'
 
@@ -28,14 +27,14 @@ const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction,
 
 
 const Game = ({ username }:GameProps): React.JSX.Element => {
-    const credits = useSelector<stateInterface, number>(state => state.user.credits)
-    const gamePhase = useSelector<stateInterface, GamePhases>(state => state.game.current_hand.phase)
-    const bankerCards = useSelector<stateInterface, cardInterface[]>(state => state.game.current_hand.banker)
-    const playerCards = useSelector<stateInterface, cardInterface[]>(state => state.game.current_hand.player)
-    const bankerScore = useSelector<stateInterface, number|string>(state => state.game.current_hand.bankerScore)
-    const playerScore = useSelector<stateInterface, number|string>(state => state.game.current_hand.playerScore)
-    const betPot = useSelector<stateInterface, number>(state => state.game.current_hand.ammountBet)
-    const winner = useSelector<stateInterface, string>(state => state.game.current_hand.winner)
+    const credits = useAppSelector(state => state.user.credits)
+    const gamePhase = useAppSelector(state => state.game.current_hand.phase)
+    const bankerCards = useAppSelector(state => state.game.current_hand.banker)
+    const playerCards = useAppSelector(state => state.game.current_hand.player)
+    const bankerScore = useAppSelector(state => state.game.current_hand.bankerScore)
+    const playerScore = useAppSelector(state => state.game.current_hand.playerScore)
+    const betPot = useAppSelector(state => state.game.current_hand.ammountBet)
+    const winner = useAppSelector(state => state.game.current_hand.winner)
     const dispatch = useAppDispatch()
 
     const [message, setMessage] = useState(`Welcome ${username.toLocaleUpperCase()}. A new deck has been shuffled; please, start a new hand!`)
@@ -59,7 +58,7 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
     ]
 
     const doDoubleDown = (currentPot:number) => {
-        dispatch(setCredit(-currentPot))
+        dispatch(changeCredits(-currentPot))
         dispatch(playerDraw(true))
     }
 
@@ -76,7 +75,7 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
                             `$${n}`,
                             () => {
                                 dispatch(makeBet(n))
-                                dispatch(setCredit(-n))
+                                dispatch(changeCredits(-n))
                             }
                         ]
                     const bettingStageButtons = buttonsFactory(
@@ -123,13 +122,13 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
                     const baseMessage =  'You can start a new hand!'
                     if (winner === 'banker' && bankerCards.length === 1 && playerScore !== 'busted') {
                         const halfPot:number = betPot / 2
-                        dispatch(setCredit(halfPot))
+                        dispatch(changeCredits(halfPot))
                         setMessage(`You have surrendered! Half pot ($${halfPot}) is back to you. ` + baseMessage)
                     } else {
                         switch (winner) {
                             case 'player':
                                 const winningAmmount = playerScore === 'blackjack' ? 2.5 * betPot : 2 * betPot
-                                dispatch(setCredit(winningAmmount))
+                                dispatch(changeCredits(winningAmmount))
                                 setMessage(`You have been awarded $${winningAmmount}, congratulations!`)
                                 break
                             case 'banker':
@@ -137,7 +136,7 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
                                 break
                             case 'tie':
                                 setMessage(`The game is a tie, you have $${betPot} back!`)
-                                dispatch(setCredit(betPot))
+                                dispatch(changeCredits(betPot))
                                 break
                         }
                     }
