@@ -1,9 +1,11 @@
 import axios from 'axios'
 import { GamePhases } from '../constants'
 import type { AppDispatch, RootState } from '../store'
+import { computePayout } from '../../utils/payout'
+import { changeCredits } from '../slices/userSlice'
 import {
     handStarted, betPlaced, initialDealt, surrendered, playerDrew,
-    doubledDown, playerStood, bankerDrew, handEnded,
+    doubledDown, playerStood, bankerDrew, handEnded, handSettled,
 } from '../slices/gameSlice'
 
 type Thunk<R = void> = (dispatch: AppDispatch, getState: () => RootState) => R
@@ -70,9 +72,8 @@ const doPlayerStay = (): Thunk => dispatch => {
 
 const bankerDraw = (): Thunk<Promise<void>> => async (dispatch, getState) => {
     const { game: { deck, current_hand: { phase } } } = getState()
-    try {
-        checkPhase('bankerDraw', [BankerAction], phase)
-    } catch {} // do nothing
+    // Not the dealer's turn (e.g. a stale timer): nothing to draw.
+    if (phase !== BankerAction) return
     const { data: { cards, remaining } } = await drawCards(deck)
     dispatch(bankerDrew({ newCard: cards[0], remaining }))
 }
@@ -81,6 +82,19 @@ const doEndgame = (): Thunk => dispatch => {
     dispatch(handEnded())
 }
 
+/**
+ * Pays out a finished hand exactly once. Safe to call repeatedly (e.g. when the
+ * game screen mounts again after navigating away): once the hand's payout is
+ * recorded, further calls do nothing.
+ */
+const settleHand = (): Thunk => (dispatch, getState) => {
+    const hand = getState().game.current_hand
+    if (hand.phase !== GameEnded || hand.payout !== null) return
+    const payout = computePayout(hand)
+    dispatch(handSettled(payout))
+    if (payout > 0) dispatch(changeCredits(payout))
+}
+
 
 export { startHand, makeBet, doInitialDeal, doSurrender,
-        playerDraw, doPlayerStay, bankerDraw, doEndgame }
+        playerDraw, doPlayerStay, bankerDraw, doEndgame, settleHand }

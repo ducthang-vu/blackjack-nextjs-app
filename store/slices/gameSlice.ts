@@ -13,7 +13,10 @@ interface GameState {
         playerScore: string | number | null,
         ammountBet: number | null,
         phase: GamePhases,
-        winner: string | null
+        winner: string | null,
+        surrendered: boolean,
+        /** Credits returned to the player for this hand; null until the hand is settled. */
+        payout: number | null
     }
 }
 
@@ -34,7 +37,9 @@ const initialState: GameState = {
         bankerScore: null,
         playerScore: null,
         ammountBet: null,
-        winner: null
+        winner: null,
+        surrendered: false,
+        payout: null
     }
 }
 
@@ -78,6 +83,7 @@ const gameSlice = createSlice({
         },
         surrendered(state) {
             state.current_hand.winner = 'banker'
+            state.current_hand.surrendered = true
             state.current_hand.phase = GameEnded
         },
         playerDrew(state, action: PayloadAction<DrawPayload>) {
@@ -109,6 +115,9 @@ const gameSlice = createSlice({
             state.current_hand.phase = BankerAction
         },
         bankerDrew(state, action: PayloadAction<DrawPayload>) {
+            // A draw that arrives after the dealer's turn is over (e.g. from a
+            // duplicate timer) must not reopen a finished hand.
+            if (state.current_hand.phase !== BankerAction) return
             state.current_hand.banker.push(action.payload.newCard)
             updateScore(state)
             const { bankerScore } = state.current_hand
@@ -124,8 +133,12 @@ const gameSlice = createSlice({
             state.isLastOfDeck = action.payload.remaining > 40
         },
         handEnded(state) {
+            if (state.current_hand.phase !== Endgame) return
             state.current_hand.winner = evaluateResult(state.current_hand.playerScore, state.current_hand.bankerScore)
             state.current_hand.phase = GameEnded
+        },
+        handSettled(state, action: PayloadAction<number>) {
+            state.current_hand.payout = action.payload
         },
     },
 })
@@ -133,6 +146,6 @@ const gameSlice = createSlice({
 export type { GameState }
 export const {
     handStarted, betPlaced, initialDealt, surrendered, playerDrew,
-    doubledDown, playerStood, bankerDrew, handEnded,
+    doubledDown, playerStood, bankerDrew, handEnded, handSettled,
 } = gameSlice.actions
 export default gameSlice.reducer

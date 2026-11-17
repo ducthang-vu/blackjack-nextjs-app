@@ -10,7 +10,7 @@ import { useAppDispatch, useAppSelector } from '../store/store'
 import { GamePhases } from '../store/constants'
 import { changeCredits } from '../store/slices/userSlice'
 import { startHand, makeBet, doInitialDeal, doSurrender, 
-        playerDraw, doPlayerStay, bankerDraw, doEndgame } from '../store/actions/GameActions'
+        playerDraw, doPlayerStay, bankerDraw, doEndgame, settleHand } from '../store/actions/GameActions'
 
 
 interface GameProps {
@@ -35,6 +35,8 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
     const playerScore = useAppSelector(state => state.game.current_hand.playerScore)
     const betPot = useAppSelector(state => state.game.current_hand.ammountBet)
     const winner = useAppSelector(state => state.game.current_hand.winner)
+    const surrendered = useAppSelector(state => state.game.current_hand.surrendered)
+    const payout = useAppSelector(state => state.game.current_hand.payout)
     const dispatch = useAppDispatch()
 
     const [message, setMessage] = useState(`Welcome ${username.toLocaleUpperCase()}. A new deck has been shuffled; please, start a new hand!`)
@@ -107,9 +109,9 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
                     setButtons(buttonsFactory(buttonsInitialAction))
                     break
                 case BankerAction:
+                    // Dealer draws are scheduled by the dedicated effect below.
                     setButtons(null)
                     setMessage(`Banker is drawing...!`)
-                    setTimeout(() => dispatch(bankerDraw()), 1500)
                     break
                 case UserAction:
                     setMessage(`Your score is ${playerScore}. Make your move: hit or stand?`)
@@ -119,27 +121,9 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
                     setTimeout(() => dispatch(doEndgame()), 1500)
                     break
                 case GameEnded:
-                    const baseMessage =  'You can start a new hand!'
-                    if (winner === 'banker' && bankerCards.length === 1 && playerScore !== 'busted') {
-                        const halfPot:number = betPot / 2
-                        dispatch(changeCredits(halfPot))
-                        setMessage(`You have surrendered! Half pot ($${halfPot}) is back to you. ` + baseMessage)
-                    } else {
-                        switch (winner) {
-                            case 'player':
-                                const winningAmmount = playerScore === 'blackjack' ? 2.5 * betPot : 2 * betPot
-                                dispatch(changeCredits(winningAmmount))
-                                setMessage(`You have been awarded $${winningAmmount}, congratulations!`)
-                                break
-                            case 'banker':
-                                setMessage(`You lost, try again!`)
-                                break
-                            case 'tie':
-                                setMessage(`The game is a tie, you have $${betPot} back!`)
-                                dispatch(changeCredits(betPot))
-                                break
-                        }
-                    }
+                    // Settlement runs in the store, once per hand, so running this
+                    // effect again (e.g. when the screen remounts) cannot pay twice.
+                    dispatch(settleHand())
                     setButtons(startButtons)
                     break
                 default:
@@ -149,12 +133,28 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
         , [gamePhase]
     )
 
+    // One dealer draw per render where it's the dealer's turn. Keeping this in a
+    // single effect (with cleanup) means a phase change and a new dealer card in
+    // the same render schedule one draw, not two.
     useEffect(() => {
-        if (gamePhase === BankerAction) {
-            setMessage(`Banker is drawing...!`) // must be optimized
-            setTimeout(() => dispatch(bankerDraw()), 1500)
+        if (gamePhase !== BankerAction) return
+        const timer = setTimeout(() => dispatch(bankerDraw()), 1500)
+        return () => clearTimeout(timer)
+    }, [gamePhase, bankerCards.length])
+
+    // The result message is derived from the settled hand, not from paying it.
+    useEffect(() => {
+        if (gamePhase !== GameEnded || payout === null) return
+        if (surrendered) {
+            setMessage(`You have surrendered! Half pot ($${payout}) is back to you. You can start a new hand!`)
+        } else if (winner === 'player') {
+            setMessage(`You have been awarded $${payout}, congratulations!`)
+        } else if (winner === 'tie') {
+            setMessage(`The game is a tie, you have $${payout} back!`)
+        } else {
+            setMessage(`You lost, try again!`)
         }
-    }, [bankerCards.length])
+    }, [gamePhase, payout, surrendered, winner])
 
     return (
         <div className="GameScreenComponent container columns">
