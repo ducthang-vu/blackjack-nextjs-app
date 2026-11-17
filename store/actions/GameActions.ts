@@ -1,125 +1,86 @@
 import axios from 'axios'
-import { GameActionTypes, GamePhases } from '../constants'
-import { state as storeInterface } from '../store'
+import { GamePhases } from '../constants'
+import type { AppDispatch, RootState } from '../store'
+import {
+    handStarted, betPlaced, initialDealt, surrendered, playerDrew,
+    doubledDown, playerStood, bankerDrew, handEnded,
+} from '../slices/gameSlice'
+
+type Thunk<R = void> = (dispatch: AppDispatch, getState: () => RootState) => R
 
 
 /**  CONSTANTS */
-const { StartHand, MakeBet, InitialDeal, Surrender, DoubleDown, 
-        PlayerDraw, PlayerStay, BankerDraw, EndgameAction } = GameActionTypes
-const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction, 
-        BankerAction, Endgame, GameEnded } = GamePhases
-const base_url:string = 'https://deckofcardsapi.com/api'
+const { PreGame, BettinStage, InitialDraw, FirstUserAction, BankerAction, GameEnded } = GamePhases
+const base_url: string = 'https://deckofcardsapi.com/api'
 
 
 /** UTILITIES */
-const checkPhase = (action:string, accepted:string[], actual: string):void => {
+const checkPhase = (action: string, accepted: string[], actual: string): void => {
     if (!accepted.includes(actual)) {
         throw `${actual} is not a valid phase for the action ${action}`
     }
 }
 
-const drawCards = (deck_id:string, number_of_cards:number=1, baseUrl:string=base_url) => 
+const drawCards = (deck_id: string, number_of_cards: number = 1, baseUrl: string = base_url) =>
     axios.get(`${baseUrl}/deck/${deck_id}/draw/?count=${number_of_cards}`)
 
 
 /** ACTIONS */
-const startHand = () => async (dispatch, getState) => {
-    const { game: { deck, 
-                    isLastOfDeck, 
-                    current_hand: { phase } }}:storeInterface = getState()
-    checkPhase(StartHand, [PreGame, GameEnded], phase)
-    let new_deck:string
-    let new_isLastOfDeck:boolean = isLastOfDeck
+const startHand = (): Thunk<Promise<void>> => async (dispatch, getState) => {
+    const { game: { deck, isLastOfDeck, current_hand: { phase } } } = getState()
+    checkPhase('startHand', [PreGame, GameEnded], phase)
+    let new_deck: string
+    let new_isLastOfDeck: boolean = isLastOfDeck
     if (isLastOfDeck) {
-        const { data: {deck_id} } = await axios.get(base_url + '/deck/new/shuffle/?deck_count=6')
+        const { data: { deck_id } } = await axios.get(base_url + '/deck/new/shuffle/?deck_count=6')
         await axios.get(base_url + `/deck/${deck_id}/draw/?count=20`)
         new_deck = deck_id
         new_isLastOfDeck = false
     }
-    dispatch({ 
-                type: StartHand, 
-                payload: {
-                    deck: new_deck || deck,
-                    isLastOfDeck: new_isLastOfDeck,
-                    new_phase: BettinStage
-                }
-        })
+    dispatch(handStarted({ deck: new_deck || deck, isLastOfDeck: new_isLastOfDeck, phase: BettinStage }))
 }
 
-const makeBet = (ammount:number) => (dispatch, getState) => {
-    const { game: { current_hand: { phase } }}:storeInterface = getState()
-    checkPhase(StartHand, [BettinStage], phase)
-    dispatch({
-        type: MakeBet, 
-        payload: {
-            ammount,
-            new_phase: InitialDraw
-        }
-    })
+const makeBet = (ammount: number): Thunk => (dispatch, getState) => {
+    checkPhase('makeBet', [BettinStage], getState().game.current_hand.phase)
+    dispatch(betPlaced({ ammount, phase: InitialDraw }))
 }
 
-const doInitialDeal = () => async (dispatch, getState) => {
-    const { game: { deck, current_hand: { phase }} }:storeInterface = getState()
-    checkPhase(StartHand, [InitialDraw], phase)
+const doInitialDeal = (): Thunk<Promise<void>> => async (dispatch, getState) => {
+    const { game: { deck, current_hand: { phase } } } = getState()
+    checkPhase('doInitialDeal', [InitialDraw], phase)
     const { data: { cards, remaining } } = await drawCards(deck, 4)
-    dispatch({
-        type: InitialDeal, 
-        payload: {
-            newPlayerCards: [cards[1], cards[3]],
-            newBankerCards: [cards[2]],
-            remaining,
-            new_phase: [FirstUserAction, BankerAction, Endgame]
-        }
-    })
+    dispatch(initialDealt({ newPlayerCards: [cards[1], cards[3]], newBankerCards: [cards[2]], remaining }))
 }
 
-const doSurrender = () => (dispatch, getState) => {
-    const { game: { current_hand: { phase } }}:storeInterface = getState()
-    checkPhase(StartHand, [FirstUserAction], phase)
-    dispatch({
-        type: Surrender,
-        payload: {new_phase: GameEnded},
-    })
+const doSurrender = (): Thunk => (dispatch, getState) => {
+    checkPhase('doSurrender', [FirstUserAction], getState().game.current_hand.phase)
+    dispatch(surrendered())
 }
 
-const playerDraw = (isDoubleDown=false) => async (dispatch, getState) => {
-    const { game: { deck } }:storeInterface = getState()
+const playerDraw = (isDoubleDown = false): Thunk<Promise<void>> => async (dispatch, getState) => {
+    const { game: { deck } } = getState()
     const { data: { cards, remaining } } = await drawCards(deck)
-    const phase_base:GamePhases[] = [BankerAction, Endgame]
-    dispatch({
-        type: isDoubleDown ? DoubleDown: PlayerDraw,
-        payload: {
-            newCard: cards[0],
-            remaining,
-            new_phase: isDoubleDown ? phase_base : phase_base.concat(UserAction)
-        }
-    })
+    const payload = { newCard: cards[0], remaining }
+    dispatch(isDoubleDown ? doubledDown(payload) : playerDrew(payload))
 }
 
-const doPlayerStay = () => dispatch => {
-    dispatch({ type: PlayerStay, payload: {new_phase: BankerAction}})
+const doPlayerStay = (): Thunk => dispatch => {
+    dispatch(playerStood())
 }
 
-const bankerDraw = () => async (dispatch, getState) => {
-    const { game: { deck , current_hand: { phase }}}:storeInterface = getState()
+const bankerDraw = (): Thunk<Promise<void>> => async (dispatch, getState) => {
+    const { game: { deck, current_hand: { phase } } } = getState()
     try {
-        checkPhase(StartHand, [BankerAction], phase)
+        checkPhase('bankerDraw', [BankerAction], phase)
     } catch {} // do nothing
     const { data: { cards, remaining } } = await drawCards(deck)
-    dispatch({
-        type: BankerDraw,
-        payload: {
-            newCard: cards[0],
-            remaining,
-            new_phase: [BankerAction, Endgame]
-        }
-    })
+    dispatch(bankerDrew({ newCard: cards[0], remaining }))
 }
 
-const doEndgame = () => dispatch => {
-    dispatch({ type: EndgameAction, payload: {new_phases: GameEnded}})
+const doEndgame = (): Thunk => dispatch => {
+    dispatch(handEnded())
 }
 
 
-export { startHand, makeBet, doInitialDeal, doSurrender, 
+export { startHand, makeBet, doInitialDeal, doSurrender,
         playerDraw, doPlayerStay, bankerDraw, doEndgame }

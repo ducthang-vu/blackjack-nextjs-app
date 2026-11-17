@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useAppDispatch } from '../store/store'
-import { setUser } from '../store/actions/userActions'
+import { setUser } from '../store/slices/userSlice'
 
 const SignIn = (): React.JSX.Element => {
     const [username, setUsername] = useState('')
@@ -8,7 +8,7 @@ const SignIn = (): React.JSX.Element => {
     const onChangeHandler = (e:React.ChangeEvent<HTMLInputElement>): void => setUsername(e.target.value)
     const submitHandler = (e: React.FormEvent<HTMLFormElement>): void => {
         e.preventDefault()
-        dispatch(setUser(username, 1000))
+        dispatch(setUser({ username, credits: 1000 }))
     }
 
     return (

@@ -13,15 +13,13 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.14.0",
     "axios": "^1.21.1",
     "bulma": "^1.0.4",
-    "immer": "^11.2.10",
     "next": "^16.4.6",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-redux": "^9.3.1",
-    "redux": "^5.0.1",
-    "redux-thunk": "^3.1.0"
+    "react-redux": "^9.3.1"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
