@@ -1,4 +1,5 @@
-const MainHeader = ():JSX.Element => {
+import React from 'react'
+const MainHeader = ():React.JSX.Element => {
     return (
         <footer className="main-footer">
             <div className="container main-footer__container">

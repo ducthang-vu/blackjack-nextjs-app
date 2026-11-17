@@ -3,7 +3,7 @@ import MainHeader from './MainHeader'
 import MainFooter from './MainFooter'
 import { link as linkInterface } from '../utils/interfaces'
 
-const Layout = (props: {children:JSX.Element}) => {
+const Layout = (props: {children:React.JSX.Element}) => {
     const navLinks:linkInterface[] = [
         {
             label: 'Home',

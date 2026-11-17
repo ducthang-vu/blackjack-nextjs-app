@@ -15,7 +15,7 @@ const GameBoard = (
         playerCards, 
         bankerScore, 
         playerScore
-    }:GameBoardProps):JSX.Element => {
+    }:GameBoardProps):React.JSX.Element => {
 
     return (
             <div className="GameBoardComponent column has-text-centered">

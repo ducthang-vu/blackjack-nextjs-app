@@ -1,4 +1,5 @@
-import produce from 'immer'
+import { produce } from 'immer'
+import { Reducer, UnknownAction } from 'redux'
 import { UserActionTypes } from '../constants'
 
 const { SetUser, SetCredit } = UserActionTypes
@@ -8,7 +9,7 @@ interface stateInterface {
     credits: number|null
 }
 
-interface action {
+interface action extends UnknownAction {
     type: string,
     payload: any
 }
@@ -17,7 +18,7 @@ const initialState:stateInterface = {
     username: null,
     credits: null
 }
-const userReducer = produce((draft:stateInterface, action:action) => {
+const userReducer: Reducer<stateInterface, UnknownAction> = produce((draft:stateInterface, action:action) => {
     const { type, payload } = action
     switch (type) {
         case SetUser:

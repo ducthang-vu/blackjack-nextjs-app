@@ -8,7 +8,7 @@ interface props {
     }[]|null
 }
 
-const MenuModals = (props:props):JSX.Element => {
+const MenuModals = (props:props):React.JSX.Element => {
     return(
         <div className="MenuModalsComponent card m-4">
             <header className="card-header p-2">

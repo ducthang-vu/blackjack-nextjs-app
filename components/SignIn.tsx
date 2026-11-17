@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useAppDispatch } from '../store/store'
 import { setUser } from '../store/actions/userActions'
 
-const SignIn = (): JSX.Element => {
+const SignIn = (): React.JSX.Element => {
     const [username, setUsername] = useState('')
-    const dispatch = useDispatch()
+    const dispatch = useAppDispatch()
     const onChangeHandler = (e:React.ChangeEvent<HTMLInputElement>): void => setUsername(e.target.value)
     const submitHandler = (e: React.FormEvent<HTMLFormElement>): void => {
         e.preventDefault()
