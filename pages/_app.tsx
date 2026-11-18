@@ -1,6 +1,5 @@
 import React from 'react'
-import 'bulma/css/bulma.min.css'
-import '../styles/globals.scss'
+import '../styles/globals.css'
 import type { AppProps /*, AppContext */ } from 'next/app'
 import store from '../store/store'
 import { Provider } from 'react-redux'

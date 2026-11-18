@@ -14,7 +14,7 @@ const playOut = (state: GameState) => {
 
 test('before the first hand: welcome and Start new hand', () => {
     expect(view(initialGameState(1000))).toEqual({
-        message: 'Welcome TESTER. Please, start a new hand!',
+        message: 'Welcome tester. Please, start a new hand!',
         actions: [{ label: 'Start new hand', event: { type: 'startHand' } }],
         pot: null,
     })
@@ -23,7 +23,7 @@ test('before the first hand: welcome and Start new hand', () => {
 describe('betting', () => {
     test('offers every bet the player can afford', () => {
         const state = atBetting(1000)
-        expect(view(state).message).toBe('TESTER, make your bet')
+        expect(view(state).message).toBe('tester, make your bet')
         expect(labels(state)).toEqual(['$10', '$20', '$30', '$40', '$50'])
         expect(view(state).actions[1].event).toEqual({ type: 'bet', amount: 20 })
     })

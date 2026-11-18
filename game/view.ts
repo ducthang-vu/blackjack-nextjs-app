@@ -62,11 +62,11 @@ function endgameMessage(state: GameState): string {
 function message(state: GameState, username: string, actions: GameAction[]): string {
     const hand = state.current_hand
     switch (hand.phase) {
-        case PreGame: return `Welcome ${username.toUpperCase()}. Please, start a new hand!`
+        case PreGame: return `Welcome ${username}. Please, start a new hand!`
         case BettinStage:
             return actions[0] === START_OVER
                 ? `You don't have enough credit for the minimum bet of $${BET_OPTIONS[0]}.`
-                : `${username.toUpperCase()}, make your bet`
+                : `${username}, make your bet`
         case InitialDraw: return `You have posted $${hand.ammountBet}.`
         case FirstUserAction: return 'Do your move!'
         case UserAction: return `Your score is ${hand.playerScore}. Make your move: hit or stand?`

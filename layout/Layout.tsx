@@ -1,39 +1,36 @@
-import React from 'react';
+import React from 'react'
 import MainHeader from './MainHeader'
 import MainFooter from './MainFooter'
 import { link as linkInterface } from '../utils/interfaces'
 
-const Layout = (props: {children:React.JSX.Element}) => {
-    const navLinks:linkInterface[] = [
-        {
-            label: 'Home',
-            path: '/'
-        },
-        {
-            label: 'Rules',
-            path: '/rules'
-        },
-        {
-            label: 'Info',
-            path: '/info'
-        }
-    ]
+const navLinks: linkInterface[] = [
+    { label: 'Play', path: '/' },
+    { label: 'Rules', path: '/rules' },
+    { label: 'Info', path: '/info' },
+]
 
-    return (
-        <section className="hero is-success is-fullheight">
-            <div className="hero-head">
-                <MainHeader links={navLinks}></MainHeader>
-            </div>
+const Layout = ({ children }: { children: React.ReactNode }) => (
+    <div className="page">
+        <MainHeader links={navLinks} />
+        <main className="page__main">{children}</main>
+        <MainFooter />
+        <style jsx>{`
+            .page {
+                min-height: 100vh;
+                min-height: 100dvh;
+                display: flex;
+                flex-direction: column;
+            }
 
-            <main className="hero-body">
-                {props.children}
-            </main>
-
-            <div className="hero-foot">
-                <MainFooter></MainFooter>
-            </div>
-        </section>
-    )
-}
+            .page__main {
+                flex: 1;
+                width: 100%;
+                max-width: var(--content-width);
+                margin: 0 auto;
+                padding: var(--space-5) var(--space-4);
+            }
+        `}</style>
+    </div>
+)
 
 export default Layout

@@ -48,9 +48,8 @@ const Card = ({ card, dealDelay = null }: CardProps): React.JSX.Element => {
                 {`
                     .CardComponent {
                         display: inline-block;
-                        height: 120px;
-                        width: 90px;
-                        margin: 5px;
+                        height: var(--card-height, 120px);
+                        width: calc(var(--card-height, 120px) * 0.75);
                         perspective: 600px;
                     }
 
@@ -72,6 +71,8 @@ const Card = ({ card, dealDelay = null }: CardProps): React.JSX.Element => {
                         height: 100%;
                         width: 100%;
                         object-fit: fill;
+                        border-radius: 6px;
+                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
                         -webkit-backface-visibility: hidden;
                         backface-visibility: hidden;
                     }

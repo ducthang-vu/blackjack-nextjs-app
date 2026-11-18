@@ -11,19 +11,41 @@ interface GameBoardProps {
     playerScore: number|string|null,
 }
 
+const scoreText = (score: number|string|null): string =>
+    score === 'blackjack' ? 'Blackjack' : score === 'busted' ? 'Bust' : String(score ?? '')
+
 /** A hand's score, shown once its newly dealt cards are face up. */
 const Score = ({ score, revealAfter }: { score: number|string|null, revealAfter: number | null }): React.JSX.Element => {
     const [delay] = useState(revealAfter) // fixed when this score first appears
+    const tone = score === 'busted' ? ' score--bust' : score === 'blackjack' ? ' score--blackjack' : ''
     return (
-        <div className="score-box">
-            <span className={delay === null ? undefined : 'revealing'} style={delay === null ? undefined : { animationDelay: `${delay}ms` }}>
-                {score}
-            </span>
+        <span
+            className={`score${tone}${delay === null ? '' : ' revealing'}`}
+            style={delay === null ? undefined : { animationDelay: `${delay}ms` }}
+        >
+            {scoreText(score)}
             <style jsx>{`
-                .score-box {
-                    margin: 10px;
-                    font-weight: bold;
-                    display: inline;
+                .score {
+                    display: inline-block;
+                    min-width: 32px;
+                    padding: 0 var(--space-2);
+                    border-radius: 999px;
+                    background: var(--surface-muted);
+                    font-size: 14px;
+                    font-weight: 700;
+                    line-height: 24px;
+                    text-align: center;
+                    font-variant-numeric: tabular-nums;
+                }
+
+                .score--blackjack {
+                    background: var(--accent);
+                    color: var(--accent-text);
+                }
+
+                .score--bust {
+                    color: var(--text-muted);
+                    text-decoration: line-through;
                 }
 
                 .revealing {
@@ -41,9 +63,55 @@ const Score = ({ score, revealAfter }: { score: number|string|null, revealAfter:
                     }
                 }
             `}</style>
-        </div>
+        </span>
     )
 }
+
+const Hand = ({ label, cardsLabel, cards, score, delays }: {
+    label: string, cardsLabel: string, cards: cardInterface[], score: number|string|null, delays: (number | null)[],
+}): React.JSX.Element => (
+    <div className="hand">
+        <div className="hand__head">
+            <h2 className="hand__label">{label}</h2>
+            <Score key={String(score)} score={score} revealAfter={scoreRevealTime(delays)} />
+        </div>
+        <ul className="hand__cards" aria-label={cardsLabel}>
+            {cards.map((card, index) =>
+                <li key={index}>
+                    <Card card={card} dealDelay={delays[index]} />
+                </li>
+            )}
+        </ul>
+        <style jsx>{`
+            .hand {
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-2);
+            }
+
+            .hand__head {
+                display: flex;
+                align-items: center;
+                gap: var(--space-2);
+            }
+
+            .hand__label {
+                font-size: 13px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: var(--text-muted);
+            }
+
+            .hand__cards {
+                display: flex;
+                flex-wrap: wrap;
+                gap: var(--space-2);
+                min-height: var(--card-height);
+            }
+        `}</style>
+    </div>
+)
 
 const GameBoard = (
     {
@@ -66,68 +134,68 @@ const GameBoard = (
     useEffect(() => { seen.current = counts })
 
     return (
-            <div className="GameBoardComponent column has-text-centered">
+            <section className="GameBoardComponent panel" aria-label="Table">
                 {playerCards.length ?
-                    <React.Fragment>
-                        <ul className="half-board banker-half">
-                            {bankerCards.map((card, index) =>
-                                <li key={index}>
-                                    <Card card={card} dealDelay={delays.banker[index]}></Card>
-                                </li>
-                            )}
-                            <Score key={String(bankerScore)} score={bankerScore} revealAfter={scoreRevealTime(delays.banker)} />
-                        </ul>
-                        <p>Blackjack pays 3 to 2 - &spades; &clubs; &hearts; &diams; - Dealer stands on all 17s</p>
-                        <ul className="half-board player-half">
-                            {playerCards.map((card, index) =>
-                                <li key={index}>
-                                    <Card card={card} dealDelay={delays.player[index]}></Card>
-                                </li>
-                            )}
-                            <Score key={String(playerScore)} score={playerScore} revealAfter={scoreRevealTime(delays.player)} />
-                        </ul>
-                    </React.Fragment>:
-
-                    <div className="no-cards-screen-message has-text-centered">
-                        <h1>Welcome!</h1>
-                        <p>Use the menu on the right to play the game.</p>
+                    <div className="hands">
+                        <Hand label="Dealer" cardsLabel="Dealer's cards" cards={bankerCards} score={bankerScore} delays={delays.banker} />
+                        <Hand label="You" cardsLabel="Your cards" cards={playerCards} score={playerScore} delays={delays.player} />
+                    </div> :
+                    <div className="empty">
+                        <p className="empty__title">No cards on the table</p>
+                        <p className="empty__text">Start a hand and place a bet to deal.</p>
                     </div>
                 }
+                <p className="house-rules">Blackjack pays 3 to 2 · Dealer stands on all 17s</p>
                 <style jsx>{`
                     .GameBoardComponent {
+                        --card-height: 120px;
                         position: relative;
-                        margin: 15px;
-                        border-radius: 10px;
-                        border: 1px solid red;
+                        padding: var(--space-5);
                         display: flex;
                         flex-direction: column;
-                        justify-content: space-between;
+                        gap: var(--space-5);
+                        min-height: calc(2 * var(--card-height) + 160px);
                     }
 
-                    .no-cards-screen-message {
-                        position: absolute;
-                        left: 50%;
-                        top: 50%;
-                        transform: translate(-50%, -50%);
-                    }
-
-                    h1 {
-                        font-size: 200%;
-                        font-weight: bold;
-                    }
-
-                    p {
-                        font-size: 150%;
-                    }
-
-                    .half-board {
+                    .hands {
                         display: flex;
-                        justify-content: center;
+                        flex-direction: column;
+                        gap: var(--space-5);
+                    }
+
+                    .empty {
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
                         align-items: center;
+                        justify-content: center;
+                        gap: var(--space-1);
+                        text-align: center;
+                    }
+
+                    .empty__title {
+                        font-weight: 600;
+                    }
+
+                    .empty__text,
+                    .house-rules {
+                        color: var(--text-muted);
+                    }
+
+                    .house-rules {
+                        margin-top: auto;
+                        font-size: 13px;
+                    }
+
+                    @media (max-width: 640px) {
+                        .GameBoardComponent {
+                            --card-height: 100px;
+                            padding: var(--space-4);
+                        }
                     }
                 `}
                 </style>
-            </div>
+            </section>
         )
 }
 

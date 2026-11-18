@@ -23,13 +23,25 @@ const ThemeToggle = (): React.JSX.Element => {
     }
 
     return (
-        <div className="navbar-item">
-            <div className="select is-small">
-                <select aria-label="Colour theme" value={theme} onChange={onChange}>
-                    {THEMES.map(t => <option key={t} value={t}>{labels[t]}</option>)}
-                </select>
-            </div>
-        </div>
+        <>
+            <select className="theme" aria-label="Colour theme" value={theme} onChange={onChange}>
+                {THEMES.map(t => <option key={t} value={t}>{labels[t]}</option>)}
+            </select>
+            <style jsx>{`
+                .theme {
+                    margin-left: var(--space-1);
+                    min-height: 32px;
+                    padding: 0 var(--space-2);
+                    border-radius: var(--radius-small);
+                    border: 1px solid var(--border);
+                    background: var(--surface);
+                    color: var(--text-muted);
+                    font: inherit;
+                    font-size: 14px;
+                    cursor: pointer;
+                }
+            `}</style>
+        </>
     )
 }
 

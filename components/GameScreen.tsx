@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react'
 
 import GameBoard from './GameBoard'
-import MenuHead from './playerMenu/MenuHead'
-import MenuModals from './playerMenu/MenuModals'
+import ActionBar from './ActionBar'
 
 import { useAppDispatch, useAppSelector } from '../store/store'
 import { gameView, GameAction } from '../game/view'
@@ -46,31 +45,26 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
     }, [hand])
 
     return (
-        <div className="GameScreenComponent container columns">
+        <div className="game">
             <GameBoard
                 bankerCards={banker}
                 playerCards={player}
                 bankerScore={bankerScore}
                 playerScore={playerScore}
-            ></GameBoard>
-
-            <div className="GameScreenComponent_game-menu column is-one-quarter">
-                <MenuHead
-                    username={username}
-                    credits={game.credits}
-                    currentPot={pot}
-                ></MenuHead>
-                <MenuModals
-                    message={message}
-                    buttons={actions.map(action => ({ label: action.label, handler: () => run(action) }))}
-                    disabled={game.pending}
-                ></MenuModals>
-            </div>
+            />
+            <ActionBar
+                username={username}
+                credits={game.credits}
+                pot={pot}
+                message={message}
+                buttons={actions.map(action => ({ label: action.label, onClick: () => run(action) }))}
+                disabled={game.pending}
+            />
             <style jsx>{`
-                .GameScreenComponent {
-                    height: 100%;
-                    width: 100%;
-                    margin: 0 auto;
+                .game {
+                    display: flex;
+                    flex-direction: column;
+                    gap: var(--space-4);
                 }
             `}</style>
         </div>
