@@ -8,6 +8,8 @@ import { card as cardInterface} from '../utils/interfaces'
 import { useAppDispatch, useAppSelector } from '../store/store'
 
 import { GamePhases } from '../store/constants'
+import { setUser } from '../store/slices/userSlice'
+import { BET_OPTIONS, STARTING_CREDITS, canAfford } from '../utils/betting'
 import { startHand, makeBet, doInitialDeal, doSurrender, 
         playerDraw, doPlayerStay, bankerDraw, doEndgame, settleHand } from '../store/actions/GameActions'
 
@@ -68,22 +70,7 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
                 case PreGame:
                     break
                 case BettinStage:
-                    const doBetFactory = (n:number) =>
-                        [
-                            `$${n}`,
-                            () => dispatch(makeBet(n))
-                        ]
-                    const bettingStageButtons = buttonsFactory(
-                        [
-                            doBetFactory(10),
-                            doBetFactory(20),
-                            doBetFactory(30),
-                            doBetFactory(40),
-                            doBetFactory(50),
-                        ]
-                    )
-                    setMessage(`${username.toUpperCase()}, make your bet`)
-                    setButtons(bettingStageButtons)
+                    // Bet buttons depend on credits too, so they are set by the effect below.
                     break
                 case InitialDraw:
                     setMessage(`You have posted $${betPot}.`)
@@ -95,7 +82,7 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
                     const doubleDown = ['Double Down', () => dispatch(playerDraw(true))]
                     const surrenderButton = ['Surrender', () => dispatch(doSurrender())]
                     const buttonsInitialAction = standardButton
-                    if ([10, 11].includes(Number(playerScore))) {
+                    if ([10, 11].includes(Number(playerScore)) && canAfford(credits, betPot)) {
                         buttonsInitialAction.push(doubleDown)
                     }
                     buttonsInitialAction.push(surrenderButton)
@@ -125,6 +112,23 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
         }
         , [gamePhase]
     )
+
+    // Betting: offer only the bets the player can afford. If they can't afford
+    // the smallest one, offer to start over instead of leaving them stuck.
+    useEffect(() => {
+        if (gamePhase !== BettinStage) return
+        const affordable = BET_OPTIONS.filter(amount => canAfford(credits, amount))
+        if (affordable.length) {
+            setMessage(`${username.toUpperCase()}, make your bet`)
+            setButtons(affordable.map(amount => ({ label: `$${amount}`, handler: () => dispatch(makeBet(amount)) })))
+        } else {
+            setMessage(`You don't have enough credit for the minimum bet of $${BET_OPTIONS[0]}.`)
+            setButtons([{
+                label: `Start over with $${STARTING_CREDITS}`,
+                handler: () => dispatch(setUser({ username, credits: STARTING_CREDITS })),
+            }])
+        }
+    }, [gamePhase, credits])
 
     // One dealer draw per render where it's the dealer's turn. Keeping this in a
     // single effect (with cleanup) means a phase change and a new dealer card in

@@ -2,6 +2,7 @@ import axios from 'axios'
 import { GamePhases } from '../constants'
 import type { AppDispatch, RootState } from '../store'
 import { computePayout } from '../../utils/payout'
+import { canAfford } from '../../utils/betting'
 import { changeCredits } from '../slices/userSlice'
 import {
     requestStarted, requestFinished, handStarted, betPlaced, initialDealt, surrendered, playerDrew,
@@ -64,6 +65,7 @@ const startHand = (): Thunk<Promise<void>> => async (dispatch, getState) => {
 
 const makeBet = (ammount: number): Thunk => (dispatch, getState) => {
     if (!canAct(getState(), [BettinStage])) return
+    if (!canAfford(getState().user.credits, ammount)) return
     dispatch(betPlaced({ ammount, phase: InitialDraw }))
     dispatch(changeCredits(-ammount))
 }
@@ -84,7 +86,9 @@ const doSurrender = (): Thunk => (dispatch, getState) => {
 const playerDraw = (isDoubleDown = false): Thunk<Promise<void>> => async (dispatch, getState) => {
     const phases = isDoubleDown ? [FirstUserAction] : [FirstUserAction, UserAction]
     if (!canAct(getState(), phases)) return
-    const { game: { deck, current_hand: { ammountBet } } } = getState()
+    const { user: { credits }, game: { deck, current_hand: { ammountBet } } } = getState()
+    // Doubling stakes the original bet again, so the player must be able to cover it.
+    if (isDoubleDown && !canAfford(credits, ammountBet)) return
     await withPending(dispatch, async () => {
         const { data: { cards, remaining } } = await drawCards(deck)
         const payload = { newCard: cards[0], remaining }
