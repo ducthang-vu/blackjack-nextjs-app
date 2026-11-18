@@ -6,17 +6,17 @@ import MenuModals from './playerMenu/MenuModals'
 
 import { useAppDispatch, useAppSelector } from '../store/store'
 import { gameView, GameAction } from '../store/gameView'
-import { GamePhases } from '../store/constants'
 import { setUser } from '../store/slices/userSlice'
-import { startHand, makeBet, doInitialDeal, doSurrender,
-        playerDraw, doPlayerStay, bankerDraw, doEndgame } from '../store/actions/GameActions'
+import { startHand, makeBet, doSurrender, playerDraw, doPlayerStay,
+        autoAdvance, isAutomaticPhase } from '../store/actions/GameActions'
 
 
 interface GameProps {
     username: string
 }
 
-const { InitialDraw, BankerAction, Endgame } = GamePhases
+/** Pause before each automatic step: the deal, each dealer card, the result. */
+const AUTOMATIC_STEP_DELAY_MS = 1500
 
 
 const Game = ({ username }:GameProps): React.JSX.Element => {
@@ -26,7 +26,8 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
 
     // Message, buttons and pot are worked out from the store on every render.
     const { message, actions, actionsDisabled, pot } = gameView({ game, user }, username)
-    const { phase, banker, player, bankerScore, playerScore } = game.current_hand
+    const hand = game.current_hand
+    const { banker, player, bankerScore, playerScore } = hand
 
     const run = (action: GameAction) => {
         switch (action.kind) {
@@ -40,26 +41,14 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
         }
     }
 
-    // Phases the game plays by itself, after a pause.
+    // The deal, the dealer's cards and the end of the hand play by themselves,
+    // one step per pause. Every change to the hand schedules the next step, and
+    // the cleanup cancels a pending one (a new step, or leaving the screen).
     useEffect(() => {
-        switch (phase) {
-            case InitialDraw:
-                setTimeout(() => dispatch(doInitialDeal()), 1500)
-                break
-            case Endgame:
-                setTimeout(() => dispatch(doEndgame()), 1500)
-                break
-        }
-    }, [phase])
-
-    // One dealer draw per render where it's the dealer's turn. Keeping this in a
-    // single effect (with cleanup) means a phase change and a new dealer card in
-    // the same render schedule one draw, not two.
-    useEffect(() => {
-        if (phase !== BankerAction) return
-        const timer = setTimeout(() => dispatch(bankerDraw()), 1500)
+        if (!isAutomaticPhase(hand.phase)) return
+        const timer = setTimeout(() => dispatch(autoAdvance()), AUTOMATIC_STEP_DELAY_MS)
         return () => clearTimeout(timer)
-    }, [phase, banker.length])
+    }, [hand])
 
     return (
         <div className="GameScreenComponent container columns">

@@ -14,7 +14,7 @@ type Thunk<R = void> = (dispatch: AppDispatch, getState: () => RootState) => R
 
 
 /**  CONSTANTS */
-const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction, BankerAction, GameEnded } = GamePhases
+const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
 
 /** Decks in the shoe. */
 const SHOE_DECKS = 6
@@ -127,7 +127,27 @@ const settleHand = (): Thunk => (dispatch, getState) => {
     if (payout > 0) dispatch(changeCredits(payout))
 }
 
+/** Phases the game plays by itself, one step at a time, after a pause. */
+const AUTOMATIC_STEPS: Partial<Record<GamePhases, () => Thunk>> = {
+    [InitialDraw]: doInitialDeal,  // deal the hand
+    [BankerAction]: bankerDraw,    // one dealer card per step
+    [Endgame]: doEndgame,          // end and settle the hand
+}
+
+const isAutomaticPhase = (phase: GamePhases): boolean => phase in AUTOMATIC_STEPS
+
+/**
+ * Takes the next automatic step for the phase the hand is in *now*, or does
+ * nothing if it's the player's turn or the hand is over. Because it reads the
+ * phase when it runs, a late or repeated call is harmless.
+ */
+const autoAdvance = (): Thunk => (dispatch, getState) => {
+    const step = AUTOMATIC_STEPS[getState().game.current_hand.phase]
+    if (step) dispatch(step())
+}
+
 
 export { startHand, makeBet, doInitialDeal, doSurrender,
         playerDraw, doPlayerStay, bankerDraw, doEndgame, settleHand,
+        autoAdvance, isAutomaticPhase,
         SHOE_DECKS, SHOE_SIZE, BURN_CARDS }
