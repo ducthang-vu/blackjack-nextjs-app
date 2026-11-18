@@ -5,7 +5,9 @@ import { GamePhases } from '../constants'
 
 interface GameState {
     deck: string | null,
-    isLastOfDeck: boolean
+    isLastOfDeck: boolean,
+    /** True while a player action is waiting on the card API; further player actions are ignored. */
+    pending: boolean,
     current_hand: {
         banker: cardInterface[],
         player: cardInterface[],
@@ -30,6 +32,7 @@ const { PreGame, FirstUserAction, UserAction, BankerAction, Endgame, GameEnded }
 const initialState: GameState = {
     deck: null,
     isLastOfDeck: true,
+    pending: false,
     current_hand: {
         phase: PreGame,
         banker: [],
@@ -54,6 +57,12 @@ const gameSlice = createSlice({
     name: 'game',
     initialState,
     reducers: {
+        requestStarted(state) {
+            state.pending = true
+        },
+        requestFinished(state) {
+            state.pending = false
+        },
         handStarted(state, action: PayloadAction<{ deck: string, isLastOfDeck: boolean, phase: GamePhases }>) {
             state.deck = action.payload.deck
             state.isLastOfDeck = action.payload.isLastOfDeck
@@ -145,7 +154,7 @@ const gameSlice = createSlice({
 
 export type { GameState }
 export const {
-    handStarted, betPlaced, initialDealt, surrendered, playerDrew,
+    requestStarted, requestFinished, handStarted, betPlaced, initialDealt, surrendered, playerDrew,
     doubledDown, playerStood, bankerDrew, handEnded, handSettled,
 } = gameSlice.actions
 export default gameSlice.reducer
