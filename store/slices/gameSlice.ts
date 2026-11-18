@@ -4,9 +4,9 @@ import { getScore, evaluateResult } from '../../utils/functions'
 import { GamePhases } from '../constants'
 
 interface GameState {
-    deck: string | null,
-    isLastOfDeck: boolean,
-    /** True while a player action is waiting on the card API; further player actions are ignored. */
+    /** Cards still to be dealt, in order. A whole shuffled shoe is fetched from the card API at once. */
+    shoe: cardInterface[],
+    /** True while a new shoe is being fetched from the card API; player actions are ignored meanwhile. */
     pending: boolean,
     current_hand: {
         banker: cardInterface[],
@@ -22,16 +22,10 @@ interface GameState {
     }
 }
 
-interface DrawPayload {
-    newCard: cardInterface,
-    remaining: number
-}
-
 const { PreGame, FirstUserAction, UserAction, BankerAction, Endgame, GameEnded } = GamePhases
 
 const initialState: GameState = {
-    deck: null,
-    isLastOfDeck: true,
+    shoe: [],
     pending: false,
     current_hand: {
         phase: PreGame,
@@ -56,6 +50,9 @@ const RESHUFFLE_THRESHOLD = 40
 
 const isShoeLow = (remaining: number): boolean => remaining < RESHUFFLE_THRESHOLD
 
+/** Takes the next `count` cards off the top of the shoe. */
+const deal = (state: GameState, count: number): cardInterface[] => state.shoe.splice(0, count)
+
 const gameSlice = createSlice({
     name: 'game',
     initialState,
@@ -66,20 +63,20 @@ const gameSlice = createSlice({
         requestFinished(state) {
             state.pending = false
         },
-        handStarted(state, action: PayloadAction<{ deck: string, isLastOfDeck: boolean, phase: GamePhases }>) {
-            state.deck = action.payload.deck
-            state.isLastOfDeck = action.payload.isLastOfDeck
+        /** Starts a hand; `shoe` replaces the current shoe when a new one was fetched. */
+        handStarted(state, action: PayloadAction<{ phase: GamePhases, shoe?: cardInterface[] }>) {
+            if (action.payload.shoe) state.shoe = action.payload.shoe
             state.current_hand = { ...initialState.current_hand, phase: action.payload.phase }
         },
         betPlaced(state, action: PayloadAction<{ ammount: number, phase: GamePhases }>) {
             state.current_hand.ammountBet = action.payload.ammount
             state.current_hand.phase = action.payload.phase
         },
-        initialDealt(state, action: PayloadAction<{ newPlayerCards: cardInterface[], newBankerCards: cardInterface[], remaining: number }>) {
-            const { payload } = action
-            state.current_hand.player = payload.newPlayerCards
-            state.current_hand.banker = payload.newBankerCards
-            state.isLastOfDeck = isShoeLow(payload.remaining)
+        initialDealt(state) {
+            // As before: the first card is burned, then player, dealer, player.
+            const [, player1, dealer1, player2] = deal(state, 4)
+            state.current_hand.player = [player1, player2]
+            state.current_hand.banker = [dealer1]
             updateScore(state)
             if (
                 state.current_hand.playerScore === 'blackjack' &&
@@ -98,8 +95,8 @@ const gameSlice = createSlice({
             state.current_hand.surrendered = true
             state.current_hand.phase = GameEnded
         },
-        playerDrew(state, action: PayloadAction<DrawPayload>) {
-            state.current_hand.player.push(action.payload.newCard)
+        playerDrew(state) {
+            state.current_hand.player.push(...deal(state, 1))
             updateScore(state)
             if (state.current_hand.playerScore === 'busted') {
                 state.current_hand.winner = 'banker'
@@ -109,10 +106,9 @@ const gameSlice = createSlice({
             } else {
                 state.current_hand.phase = UserAction
             }
-            state.isLastOfDeck = isShoeLow(action.payload.remaining)
         },
-        doubledDown(state, action: PayloadAction<DrawPayload>) {
-            state.current_hand.player.push(action.payload.newCard)
+        doubledDown(state) {
+            state.current_hand.player.push(...deal(state, 1))
             updateScore(state)
             state.current_hand.ammountBet *= 2
             if (state.current_hand.playerScore === 'busted') {
@@ -121,16 +117,15 @@ const gameSlice = createSlice({
             } else {
                 state.current_hand.phase = BankerAction
             }
-            state.isLastOfDeck = isShoeLow(action.payload.remaining)
         },
         playerStood(state) {
             state.current_hand.phase = BankerAction
         },
-        bankerDrew(state, action: PayloadAction<DrawPayload>) {
+        bankerDrew(state) {
             // A draw that arrives after the dealer's turn is over (e.g. from a
             // duplicate timer) must not reopen a finished hand.
             if (state.current_hand.phase !== BankerAction) return
-            state.current_hand.banker.push(action.payload.newCard)
+            state.current_hand.banker.push(...deal(state, 1))
             updateScore(state)
             const { bankerScore } = state.current_hand
             if (
@@ -142,7 +137,6 @@ const gameSlice = createSlice({
             } else {
                 state.current_hand.phase = BankerAction
             }
-            state.isLastOfDeck = isShoeLow(action.payload.remaining)
         },
         handEnded(state) {
             if (state.current_hand.phase !== Endgame) return
@@ -156,6 +150,7 @@ const gameSlice = createSlice({
 })
 
 export type { GameState }
+export { isShoeLow, RESHUFFLE_THRESHOLD }
 export const {
     requestStarted, requestFinished, handStarted, betPlaced, initialDealt, surrendered, playerDrew,
     doubledDown, playerStood, bankerDrew, handEnded, handSettled,

@@ -1,12 +1,13 @@
 import axios from 'axios'
 import { GamePhases } from '../constants'
 import type { AppDispatch, RootState } from '../store'
+import type { card as cardInterface } from '../../utils/interfaces'
 import { computePayout } from '../../utils/payout'
 import { canAfford } from '../../utils/betting'
 import { changeCredits } from '../slices/userSlice'
 import {
     requestStarted, requestFinished, handStarted, betPlaced, initialDealt, surrendered, playerDrew,
-    doubledDown, playerStood, bankerDrew, handEnded, handSettled,
+    doubledDown, playerStood, bankerDrew, handEnded, handSettled, isShoeLow,
 } from '../slices/gameSlice'
 
 type Thunk<R = void> = (dispatch: AppDispatch, getState: () => RootState) => R
@@ -16,51 +17,50 @@ type Thunk<R = void> = (dispatch: AppDispatch, getState: () => RootState) => R
 const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction, BankerAction, GameEnded } = GamePhases
 const base_url: string = 'https://deckofcardsapi.com/api'
 
+/** Decks in the shoe. */
+const SHOE_DECKS = 6
+const SHOE_SIZE = 52 * SHOE_DECKS
+/** Cards discarded from the top of every new shoe. */
+const BURN_CARDS = 20
+
 
 /** UTILITIES */
-const checkPhase = (action: string, accepted: string[], actual: string): void => {
-    if (!accepted.includes(actual)) {
-        throw `${actual} is not a valid phase for the action ${action}`
-    }
-}
-
-const drawCards = (deck_id: string, number_of_cards: number = 1, baseUrl: string = base_url) =>
-    axios.get(`${baseUrl}/deck/${deck_id}/draw/?count=${number_of_cards}`)
 
 /**
- * Whether a player action may run now: not while another one is waiting on
- * the card API, and only in the phases where the action is allowed. Player
- * actions that fail this check are ignored, so a double click is harmless.
+ * Fetches a new shuffled shoe in one request: the card API shuffles a
+ * 6-deck shoe and returns every card, which the game then deals from locally.
+ */
+const fetchShoe = async (baseUrl: string = base_url): Promise<cardInterface[]> => {
+    const { data } = await axios.get(`${baseUrl}/deck/new/draw/?deck_count=${SHOE_DECKS}&count=${SHOE_SIZE}`)
+    if (!data?.success || data.cards?.length !== SHOE_SIZE) {
+        throw new Error(`Expected a shoe of ${SHOE_SIZE} cards from the card API`)
+    }
+    return data.cards.slice(BURN_CARDS)
+}
+
+/**
+ * Whether a player action may run now: not while a new shoe is being fetched,
+ * and only in the phases where the action is allowed. Player actions that fail
+ * this check are ignored, so a double click is harmless.
  */
 const canAct = (state: RootState, phases: GamePhases[]): boolean =>
     !state.game.pending && phases.includes(state.game.current_hand.phase)
-
-/** Runs a player action that calls the card API, holding the pending flag until it settles. */
-const withPending = async (dispatch: AppDispatch, request: () => Promise<void>): Promise<void> => {
-    dispatch(requestStarted())
-    try {
-        await request()
-    } finally {
-        dispatch(requestFinished())
-    }
-}
 
 
 /** ACTIONS */
 const startHand = (): Thunk<Promise<void>> => async (dispatch, getState) => {
     if (!canAct(getState(), [PreGame, GameEnded])) return
-    const { game: { deck, isLastOfDeck } } = getState()
-    await withPending(dispatch, async () => {
-        let new_deck: string
-        let new_isLastOfDeck: boolean = isLastOfDeck
-        if (isLastOfDeck) {
-            const { data: { deck_id } } = await axios.get(base_url + '/deck/new/shuffle/?deck_count=6')
-            await axios.get(base_url + `/deck/${deck_id}/draw/?count=20`)
-            new_deck = deck_id
-            new_isLastOfDeck = false
-        }
-        dispatch(handStarted({ deck: new_deck || deck, isLastOfDeck: new_isLastOfDeck, phase: BettinStage }))
-    })
+    if (!isShoeLow(getState().game.shoe.length)) {
+        dispatch(handStarted({ phase: BettinStage }))
+        return
+    }
+    dispatch(requestStarted())
+    try {
+        const shoe = await fetchShoe()
+        dispatch(handStarted({ phase: BettinStage, shoe }))
+    } finally {
+        dispatch(requestFinished())
+    }
 }
 
 const makeBet = (ammount: number): Thunk => (dispatch, getState) => {
@@ -70,11 +70,9 @@ const makeBet = (ammount: number): Thunk => (dispatch, getState) => {
     dispatch(changeCredits(-ammount))
 }
 
-const doInitialDeal = (): Thunk<Promise<void>> => async (dispatch, getState) => {
-    const { game: { deck, current_hand: { phase } } } = getState()
-    checkPhase('doInitialDeal', [InitialDraw], phase)
-    const { data: { cards, remaining } } = await drawCards(deck, 4)
-    dispatch(initialDealt({ newPlayerCards: [cards[1], cards[3]], newBankerCards: [cards[2]], remaining }))
+const doInitialDeal = (): Thunk => (dispatch, getState) => {
+    if (getState().game.current_hand.phase !== InitialDraw) return
+    dispatch(initialDealt())
 }
 
 const doSurrender = (): Thunk => (dispatch, getState) => {
@@ -83,22 +81,18 @@ const doSurrender = (): Thunk => (dispatch, getState) => {
 }
 
 /** Hit, or Double Down when `isDoubleDown` (first action only; doubles the bet and draws one card). */
-const playerDraw = (isDoubleDown = false): Thunk<Promise<void>> => async (dispatch, getState) => {
+const playerDraw = (isDoubleDown = false): Thunk => (dispatch, getState) => {
     const phases = isDoubleDown ? [FirstUserAction] : [FirstUserAction, UserAction]
     if (!canAct(getState(), phases)) return
-    const { user: { credits }, game: { deck, current_hand: { ammountBet } } } = getState()
+    if (!isDoubleDown) {
+        dispatch(playerDrew())
+        return
+    }
+    const { user: { credits }, game: { current_hand: { ammountBet } } } = getState()
     // Doubling stakes the original bet again, so the player must be able to cover it.
-    if (isDoubleDown && !canAfford(credits, ammountBet)) return
-    await withPending(dispatch, async () => {
-        const { data: { cards, remaining } } = await drawCards(deck)
-        const payload = { newCard: cards[0], remaining }
-        if (isDoubleDown) {
-            dispatch(changeCredits(-ammountBet))
-            dispatch(doubledDown(payload))
-        } else {
-            dispatch(playerDrew(payload))
-        }
-    })
+    if (!canAfford(credits, ammountBet)) return
+    dispatch(changeCredits(-ammountBet))
+    dispatch(doubledDown())
 }
 
 const doPlayerStay = (): Thunk => (dispatch, getState) => {
@@ -106,12 +100,10 @@ const doPlayerStay = (): Thunk => (dispatch, getState) => {
     dispatch(playerStood())
 }
 
-const bankerDraw = (): Thunk<Promise<void>> => async (dispatch, getState) => {
-    const { game: { deck, current_hand: { phase } } } = getState()
+const bankerDraw = (): Thunk => (dispatch, getState) => {
     // Not the dealer's turn (e.g. a stale timer): nothing to draw.
-    if (phase !== BankerAction) return
-    const { data: { cards, remaining } } = await drawCards(deck)
-    dispatch(bankerDrew({ newCard: cards[0], remaining }))
+    if (getState().game.current_hand.phase !== BankerAction) return
+    dispatch(bankerDrew())
 }
 
 const doEndgame = (): Thunk => dispatch => {
@@ -133,4 +125,5 @@ const settleHand = (): Thunk => (dispatch, getState) => {
 
 
 export { startHand, makeBet, doInitialDeal, doSurrender,
-        playerDraw, doPlayerStay, bankerDraw, doEndgame, settleHand }
+        playerDraw, doPlayerStay, bankerDraw, doEndgame, settleHand,
+        SHOE_DECKS, SHOE_SIZE, BURN_CARDS }

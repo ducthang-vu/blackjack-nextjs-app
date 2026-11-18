@@ -1,39 +1,7 @@
-import axios from 'axios'
-import { configureStore } from '@reduxjs/toolkit'
-import userReducer, { setUser } from '../store/slices/userSlice'
-import gameReducer, { handStarted, initialDealt } from '../store/slices/gameSlice'
 import { makeBet, playerDraw } from '../store/actions/GameActions'
 import { GamePhases } from '../store/constants'
 import { canAfford } from '../utils/betting'
-import { makeCard, makeCards } from '../utils/functions'
-
-jest.mock('axios')
-const mockedGet = axios.get as jest.Mock
-
-const makeStore = () => configureStore({ reducer: { user: userReducer, game: gameReducer } })
-type Store = ReturnType<typeof makeStore>
-
-/** A player with `credits` at the betting stage. */
-function atBetting(credits: number) {
-    const store = makeStore()
-    store.dispatch(setUser({ username: 'tester', credits }))
-    store.dispatch(handStarted({ deck: 'deck', isLastOfDeck: false, phase: GamePhases.BettinStage }))
-    return store
-}
-
-/** Places `bet` and deals the player 5 + 6 (11, so Double Down is on offer). */
-function dealElevenAfterBet(store: Store, bet: number) {
-    store.dispatch(makeBet(bet))
-    store.dispatch(initialDealt({ newPlayerCards: makeCards('5', '6'), newBankerCards: makeCards('4'), remaining: 200 }))
-}
-
-const credits = (store: Store) => store.getState().user.credits
-const hand = (store: Store) => store.getState().game.current_hand
-
-beforeEach(() => {
-    mockedGet.mockReset()
-    mockedGet.mockResolvedValue({ data: { cards: [makeCard('2')], remaining: 200 } })
-})
+import { atBetting, dealHand, hand, credits } from './helpers'
 
 describe('betting', () => {
     test('a bet above the player\'s credit is ignored', () => {
@@ -64,23 +32,21 @@ describe('betting', () => {
 })
 
 describe('double down', () => {
-    test('is ignored when the player cannot cover the extra stake', async () => {
-        const store = atBetting(35)
-        dealElevenAfterBet(store, 20) // 15 left, needs 20
+    // The player is dealt 5 + 6 (11), so Double Down is on offer.
+    test('is ignored when the player cannot cover the extra stake', () => {
+        const store = dealHand({ player: ['5', '6'], dealer: '4', next: ['2'], credits: 35 }) // 15 left, needs 20
 
-        await store.dispatch(playerDraw(true))
+        store.dispatch(playerDraw(true))
 
-        expect(mockedGet).not.toHaveBeenCalled()
         expect(hand(store).ammountBet).toBe(20)
         expect(hand(store).player).toHaveLength(2)
         expect(credits(store)).toBe(15)
     })
 
-    test('is allowed when the player has exactly enough', async () => {
-        const store = atBetting(40)
-        dealElevenAfterBet(store, 20) // 20 left, needs 20
+    test('is allowed when the player has exactly enough', () => {
+        const store = dealHand({ player: ['5', '6'], dealer: '4', next: ['2'], credits: 40 }) // 20 left, needs 20
 
-        await store.dispatch(playerDraw(true))
+        store.dispatch(playerDraw(true))
 
         expect(hand(store).ammountBet).toBe(40)
         expect(hand(store).player).toHaveLength(3)
