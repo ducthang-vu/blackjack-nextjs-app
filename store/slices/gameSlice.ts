@@ -51,8 +51,11 @@ const updateScore = (state: GameState) => {
     state.current_hand.bankerScore = getScore(state.current_hand.banker)
 }
 
-// Reducer logic is carried over unchanged from the previous hand-written reducer.
-// Known bugs (e.g. the inverted isLastOfDeck checks) are fixed in a separate change.
+/** Below this many cards left, a fresh shoe is fetched before the next hand. */
+const RESHUFFLE_THRESHOLD = 40
+
+const isShoeLow = (remaining: number): boolean => remaining < RESHUFFLE_THRESHOLD
+
 const gameSlice = createSlice({
     name: 'game',
     initialState,
@@ -76,7 +79,7 @@ const gameSlice = createSlice({
             const { payload } = action
             state.current_hand.player = payload.newPlayerCards
             state.current_hand.banker = payload.newBankerCards
-            state.isLastOfDeck = payload.remaining < 40
+            state.isLastOfDeck = isShoeLow(payload.remaining)
             updateScore(state)
             if (
                 state.current_hand.playerScore === 'blackjack' &&
@@ -106,7 +109,7 @@ const gameSlice = createSlice({
             } else {
                 state.current_hand.phase = UserAction
             }
-            state.isLastOfDeck = action.payload.remaining > 40
+            state.isLastOfDeck = isShoeLow(action.payload.remaining)
         },
         doubledDown(state, action: PayloadAction<DrawPayload>) {
             state.current_hand.player.push(action.payload.newCard)
@@ -118,7 +121,7 @@ const gameSlice = createSlice({
             } else {
                 state.current_hand.phase = BankerAction
             }
-            state.isLastOfDeck = action.payload.remaining > 40
+            state.isLastOfDeck = isShoeLow(action.payload.remaining)
         },
         playerStood(state) {
             state.current_hand.phase = BankerAction
@@ -139,7 +142,7 @@ const gameSlice = createSlice({
             } else {
                 state.current_hand.phase = BankerAction
             }
-            state.isLastOfDeck = action.payload.remaining > 40
+            state.isLastOfDeck = isShoeLow(action.payload.remaining)
         },
         handEnded(state) {
             if (state.current_hand.phase !== Endgame) return
