@@ -9,14 +9,14 @@ import { gameView, GameAction } from '../store/gameView'
 import { GamePhases } from '../store/constants'
 import { setUser } from '../store/slices/userSlice'
 import { startHand, makeBet, doInitialDeal, doSurrender,
-        playerDraw, doPlayerStay, bankerDraw, doEndgame, settleHand } from '../store/actions/GameActions'
+        playerDraw, doPlayerStay, bankerDraw, doEndgame } from '../store/actions/GameActions'
 
 
 interface GameProps {
     username: string
 }
 
-const { InitialDraw, BankerAction, Endgame, GameEnded } = GamePhases
+const { InitialDraw, BankerAction, Endgame } = GamePhases
 
 
 const Game = ({ username }:GameProps): React.JSX.Element => {
@@ -40,7 +40,7 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
         }
     }
 
-    // Phases the game plays by itself, after a pause, and settling a finished hand.
+    // Phases the game plays by itself, after a pause.
     useEffect(() => {
         switch (phase) {
             case InitialDraw:
@@ -48,11 +48,6 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
                 break
             case Endgame:
                 setTimeout(() => dispatch(doEndgame()), 1500)
-                break
-            case GameEnded:
-                // Settlement runs in the store, once per hand, so running this
-                // effect again (e.g. when the screen remounts) cannot pay twice.
-                dispatch(settleHand())
                 break
         }
     }, [phase])
