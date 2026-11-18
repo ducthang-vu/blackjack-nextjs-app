@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { GamePhases } from '../constants'
+import { newDeckDraw } from '../../services/deckService'
 import type { AppDispatch, RootState } from '../store'
 import type { card as cardInterface } from '../../utils/interfaces'
 import { computePayout } from '../../utils/payout'
@@ -15,7 +15,6 @@ type Thunk<R = void> = (dispatch: AppDispatch, getState: () => RootState) => R
 
 /**  CONSTANTS */
 const { PreGame, BettinStage, InitialDraw, FirstUserAction, UserAction, BankerAction, GameEnded } = GamePhases
-const base_url: string = 'https://deckofcardsapi.com/api'
 
 /** Decks in the shoe. */
 const SHOE_DECKS = 6
@@ -27,13 +26,13 @@ const BURN_CARDS = 20
 /** UTILITIES */
 
 /**
- * Fetches a new shuffled shoe in one request: the card API shuffles a
- * 6-deck shoe and returns every card, which the game then deals from locally.
+ * Gets a new shuffled shoe: the deck service shuffles a 6-deck shoe and
+ * returns every card, which the game then deals from.
  */
-const fetchShoe = async (baseUrl: string = base_url): Promise<cardInterface[]> => {
-    const { data } = await axios.get(`${baseUrl}/deck/new/draw/?deck_count=${SHOE_DECKS}&count=${SHOE_SIZE}`)
+const fetchShoe = async (): Promise<cardInterface[]> => {
+    const data = await newDeckDraw({ deckCount: SHOE_DECKS, count: SHOE_SIZE })
     if (!data?.success || data.cards?.length !== SHOE_SIZE) {
-        throw new Error(`Expected a shoe of ${SHOE_SIZE} cards from the card API`)
+        throw new Error(`Expected a shoe of ${SHOE_SIZE} cards from the deck service`)
     }
     return data.cards.slice(BURN_CARDS)
 }

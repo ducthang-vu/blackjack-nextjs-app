@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { newDeckDraw } from '../services/deckService'
 import { setUser } from '../store/slices/userSlice'
 import { handStarted, playerStood, RESHUFFLE_THRESHOLD } from '../store/slices/gameSlice'
 import { startHand, playerDraw, bankerDraw, SHOE_SIZE, BURN_CARDS } from '../store/actions/GameActions'
@@ -6,13 +6,15 @@ import { GamePhases } from '../store/constants'
 import { makeCards } from '../utils/functions'
 import { makeStore, dealHand, hand, shoeOf } from './helpers'
 
-jest.mock('axios')
-const mockedGet = axios.get as jest.Mock
+jest.mock('../services/deckService', () => ({
+    ...jest.requireActual('../services/deckService'),
+    newDeckDraw: jest.fn(),
+}))
+const mockedDraw = newDeckDraw as jest.Mock
 
-/** What the card API returns for a new 6-deck shoe drawn in full. */
-const fullShoeResponse = () => ({
-    data: { success: true, deck_id: 'abc', remaining: 0, cards: makeCards(...Array(SHOE_SIZE).fill('3')) },
-})
+/** What the deck service returns for a new 6-deck shoe drawn in full. */
+const fullShoeResponse = () =>
+    ({ success: true, deck_id: 'abc', remaining: 0, cards: makeCards(...Array(SHOE_SIZE).fill('3')) })
 
 /** A store at the end of a hand, with `cardsLeft` cards in the shoe. */
 function afterHandWith(cardsLeft: number) {
@@ -22,51 +24,51 @@ function afterHandWith(cardsLeft: number) {
     return store
 }
 
-beforeEach(() => mockedGet.mockReset())
+beforeEach(() => mockedDraw.mockReset())
 
 describe('fetching a shoe', () => {
-    test('the first hand fetches a whole shuffled shoe in one request and burns 20 cards', async () => {
-        mockedGet.mockResolvedValue(fullShoeResponse())
+    test('the first hand gets a whole shuffled 6-deck shoe at once and burns 20 cards', async () => {
+        mockedDraw.mockResolvedValue(fullShoeResponse())
         const store = makeStore()
         store.dispatch(setUser({ username: 'tester', credits: 1000 }))
 
         await store.dispatch(startHand())
 
-        expect(mockedGet).toHaveBeenCalledTimes(1)
-        expect(mockedGet.mock.calls[0][0]).toBe('https://deckofcardsapi.com/api/deck/new/draw/?deck_count=6&count=312')
+        expect(mockedDraw).toHaveBeenCalledTimes(1)
+        expect(mockedDraw).toHaveBeenCalledWith({ deckCount: 6, count: 312 })
         expect(store.getState().game.shoe).toHaveLength(SHOE_SIZE - BURN_CARDS)
         expect(hand(store).phase).toBe(GamePhases.BettinStage)
         expect(store.getState().game.pending).toBe(false)
     })
 
-    test('a hand starts without any request while the shoe has enough cards', async () => {
+    test('a hand starts without a new shoe while the shoe has enough cards', async () => {
         const store = afterHandWith(RESHUFFLE_THRESHOLD)
         await store.dispatch(startHand())
 
-        expect(mockedGet).not.toHaveBeenCalled()
+        expect(mockedDraw).not.toHaveBeenCalled()
         expect(store.getState().game.shoe).toHaveLength(RESHUFFLE_THRESHOLD)
         expect(hand(store).phase).toBe(GamePhases.BettinStage)
     })
 
     test('a new shoe is fetched once fewer than 40 cards are left', async () => {
-        mockedGet.mockResolvedValue(fullShoeResponse())
+        mockedDraw.mockResolvedValue(fullShoeResponse())
         const store = afterHandWith(RESHUFFLE_THRESHOLD - 1)
         await store.dispatch(startHand())
 
-        expect(mockedGet).toHaveBeenCalledTimes(1)
+        expect(mockedDraw).toHaveBeenCalledTimes(1)
         expect(store.getState().game.shoe).toHaveLength(SHOE_SIZE - BURN_CARDS)
     })
 
     test('double-clicking Start new hand fetches one shoe', async () => {
-        mockedGet.mockResolvedValue(fullShoeResponse())
+        mockedDraw.mockResolvedValue(fullShoeResponse())
         const store = afterHandWith(0)
         await Promise.all([store.dispatch(startHand()), store.dispatch(startHand())])
 
-        expect(mockedGet).toHaveBeenCalledTimes(1)
+        expect(mockedDraw).toHaveBeenCalledTimes(1)
     })
 
-    test('a failed request leaves the game ready to try again', async () => {
-        mockedGet.mockRejectedValueOnce(new Error('network down'))
+    test('a failure leaves the game ready to try again', async () => {
+        mockedDraw.mockRejectedValueOnce(new Error('network down'))
         const store = afterHandWith(0)
 
         await expect(store.dispatch(startHand())).rejects.toThrow('network down')
@@ -74,8 +76,8 @@ describe('fetching a shoe', () => {
         expect(store.getState().game.pending).toBe(false)
     })
 
-    test('an incomplete shoe from the API is rejected', async () => {
-        mockedGet.mockResolvedValueOnce({ data: { success: false, cards: makeCards('2', '3') } })
+    test('an incomplete shoe is rejected', async () => {
+        mockedDraw.mockResolvedValueOnce({ success: false, cards: makeCards('2', '3') })
         const store = afterHandWith(0)
 
         await expect(store.dispatch(startHand())).rejects.toThrow('Expected a shoe of 312 cards')
@@ -92,7 +94,7 @@ describe('dealing from the shoe', () => {
         expect(store.getState().game.shoe).toHaveLength(shoeOf().length)
     })
 
-    test('hits and dealer cards come off the top of the shoe, in order, with no request', () => {
+    test('hits and dealer cards come off the top of the shoe, in order, without a new shoe', () => {
         const store = dealHand({ player: ['2', '3'], dealer: '5', next: ['4', '6', '10', '8'] })
         store.dispatch(playerDraw())
         store.dispatch(playerDraw())
@@ -102,7 +104,7 @@ describe('dealing from the shoe', () => {
 
         expect(hand(store).player.map(card => card.value)).toEqual(['2', '3', '4', '6'])
         expect(hand(store).banker.map(card => card.value)).toEqual(['5', '10', '8'])
-        expect(mockedGet).not.toHaveBeenCalled()
+        expect(mockedDraw).not.toHaveBeenCalled()
     })
 })
 

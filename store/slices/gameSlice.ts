@@ -4,9 +4,9 @@ import { getScore, evaluateResult } from '../../utils/functions'
 import { GamePhases } from '../constants'
 
 interface GameState {
-    /** Cards still to be dealt, in order. A whole shuffled shoe is fetched from the card API at once. */
+    /** Cards still to be dealt, in order. A whole shuffled shoe comes from the deck service at once. */
     shoe: cardInterface[],
-    /** True while a new shoe is being fetched from the card API; player actions are ignored meanwhile. */
+    /** True while a new shoe is being fetched from the deck service; player actions are ignored meanwhile. */
     pending: boolean,
     current_hand: {
         banker: cardInterface[],
