@@ -8,7 +8,6 @@ import { card as cardInterface} from '../utils/interfaces'
 import { useAppDispatch, useAppSelector } from '../store/store'
 
 import { GamePhases } from '../store/constants'
-import { changeCredits } from '../store/slices/userSlice'
 import { startHand, makeBet, doInitialDeal, doSurrender, 
         playerDraw, doPlayerStay, bankerDraw, doEndgame, settleHand } from '../store/actions/GameActions'
 
@@ -37,6 +36,7 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
     const winner = useAppSelector(state => state.game.current_hand.winner)
     const surrendered = useAppSelector(state => state.game.current_hand.surrendered)
     const payout = useAppSelector(state => state.game.current_hand.payout)
+    const pending = useAppSelector(state => state.game.pending)
     const dispatch = useAppDispatch()
 
     const [message, setMessage] = useState(`Welcome ${username.toLocaleUpperCase()}. A new deck has been shuffled; please, start a new hand!`)
@@ -59,10 +59,6 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
         ['Stand', () => dispatch(doPlayerStay())]
     ]
 
-    const doDoubleDown = (currentPot:number) => {
-        dispatch(changeCredits(-currentPot))
-        dispatch(playerDraw(true))
-    }
 
     const potShow:number|null = [GameEnded, PreGame, BettinStage].includes(gamePhase) ? null : betPot
 
@@ -75,10 +71,7 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
                     const doBetFactory = (n:number) =>
                         [
                             `$${n}`,
-                            () => {
-                                dispatch(makeBet(n))
-                                dispatch(changeCredits(-n))
-                            }
+                            () => dispatch(makeBet(n))
                         ]
                     const bettingStageButtons = buttonsFactory(
                         [
@@ -99,7 +92,7 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
                     break
                 case FirstUserAction:
                     setMessage(`Do your move!`)
-                    const doubleDown = ['Double Down', () => doDoubleDown(betPot)]
+                    const doubleDown = ['Double Down', () => dispatch(playerDraw(true))]
                     const surrenderButton = ['Surrender', () => dispatch(doSurrender())]
                     const buttonsInitialAction = standardButton
                     if ([10, 11].includes(Number(playerScore))) {
@@ -178,6 +171,7 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
                 <MenuModals
                     message={message}
                     buttons={buttons}
+                    disabled={pending}
                 ></MenuModals>
             </div>
             <style jsx>{`

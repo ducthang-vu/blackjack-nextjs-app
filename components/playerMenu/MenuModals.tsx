@@ -5,7 +5,9 @@ interface props {
     buttons: {
         label: string,
         handler:  (event: React.MouseEvent<HTMLButtonElement>) => void
-    }[]|null
+    }[]|null,
+    /** Disables every button, e.g. while a player action is waiting on the card API. */
+    disabled?: boolean
 }
 
 const MenuModals = (props:props):React.JSX.Element => {
@@ -18,8 +20,9 @@ const MenuModals = (props:props):React.JSX.Element => {
                 {props.buttons && props.buttons.map(({label, handler}, index) => 
                     <button 
                         key={index}
-                        className="button is-primary m-2" 
+                        className="button is-primary m-2"
                         onClick={handler}
+                        disabled={props.disabled}
                     ><span>{label}</span></button>  
                 )}
             </div>
