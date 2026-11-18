@@ -8,6 +8,8 @@ import { useAppDispatch, useAppSelector } from '../store/store'
 import { gameView, GameAction } from '../game/view'
 import { isAutomaticPhase } from '../game/engine'
 import { startHand, play, autoAdvance } from '../store/actions/GameActions'
+import { CARD_CODES } from '../services/deckService'
+import { preloadCardImages } from '../utils/cardImages'
 
 
 interface GameProps {
@@ -30,6 +32,9 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
     // Each button sends its event to the game; starting a hand may first fetch a shoe.
     const run = ({ event }: GameAction) =>
         dispatch(event.type === 'startHand' ? startHand() : play(event))
+
+    // Fetch every card face up front, so cards are ready when they're dealt.
+    useEffect(() => preloadCardImages(CARD_CODES), [])
 
     // The deal, the dealer's cards and the end of the hand play by themselves,
     // one step per pause. Every change to the hand schedules the next step, and

@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { card as cardInterface } from '../utils/interfaces'
+import { CardCounts, dealDelays, scoreRevealTime } from '../utils/dealAnimation'
 import Card from './Card'
 
 
@@ -9,48 +10,81 @@ interface GameBoardProps {
     bankerScore: number|string|null,
     playerScore: number|string|null,
 }
+
+/** A hand's score, shown once its newly dealt cards are face up. */
+const Score = ({ score, revealAfter }: { score: number|string|null, revealAfter: number | null }): React.JSX.Element => {
+    const [delay] = useState(revealAfter) // fixed when this score first appears
+    return (
+        <div className="score-box">
+            <span className={delay === null ? undefined : 'revealing'} style={delay === null ? undefined : { animationDelay: `${delay}ms` }}>
+                {score}
+            </span>
+            <style jsx>{`
+                .score-box {
+                    margin: 10px;
+                    font-weight: bold;
+                    display: inline;
+                }
+
+                .revealing {
+                    animation: score-in 200ms ease-out both;
+                }
+
+                @keyframes score-in {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    .revealing {
+                        animation: none;
+                    }
+                }
+            `}</style>
+        </div>
+    )
+}
+
 const GameBoard = (
     {
-        bankerCards, 
-        playerCards, 
-        bankerScore, 
+        bankerCards,
+        playerCards,
+        bankerScore,
         playerScore
     }:GameBoardProps):React.JSX.Element => {
+
+    // Cards already on the table when the board appears (e.g. back from the
+    // Rules page) are shown as they are; only cards dealt from now on animate.
+    const counts: CardCounts = { player: playerCards.length, banker: bankerCards.length }
+    const seen = useRef<CardCounts>(counts)
+    // A new hand clears the table, so counting starts again from zero.
+    const before: CardCounts = {
+        player: Math.min(seen.current.player, counts.player),
+        banker: Math.min(seen.current.banker, counts.banker),
+    }
+    const delays = dealDelays(before, counts)
+    useEffect(() => { seen.current = counts })
 
     return (
             <div className="GameBoardComponent column has-text-centered">
                 {playerCards.length ?
                     <React.Fragment>
                         <ul className="half-board banker-half">
-                            {bankerCards.map((card, index) => 
+                            {bankerCards.map((card, index) =>
                                 <li key={index}>
-                                    <Card
-                                        image={card.image}
-                                        value={card.value}
-                                        suit={card.suit}
-                                        code={card.code}
-                                    ></Card>
+                                    <Card card={card} dealDelay={delays.banker[index]}></Card>
                                 </li>
                             )}
-                            <div className="score-box">
-                                <span>{bankerScore}</span>
-                            </div>
+                            <Score key={String(bankerScore)} score={bankerScore} revealAfter={scoreRevealTime(delays.banker)} />
                         </ul>
                         <p>Blackjack pays 3 to 2 - &spades; &clubs; &hearts; &diams; - Dealer stands on all 17s</p>
                         <ul className="half-board player-half">
-                            {playerCards.map((card, index) => 
+                            {playerCards.map((card, index) =>
                                 <li key={index}>
-                                    <Card
-                                        image={card.image}
-                                        value={card.value}
-                                        suit={card.suit}
-                                        code={card.code}
-                                    ></Card>
+                                    <Card card={card} dealDelay={delays.player[index]}></Card>
                                 </li>
                             )}
-                            <div className="score-box">
-                                <span>{playerScore}</span>
-                            </div> 
+                            <Score key={String(playerScore)} score={playerScore} revealAfter={scoreRevealTime(delays.player)} />
                         </ul>
                     </React.Fragment>:
 
@@ -85,17 +119,11 @@ const GameBoard = (
                     p {
                         font-size: 150%;
                     }
-                    
+
                     .half-board {
                         display: flex;
                         justify-content: center;
                         align-items: center;
-                    }
-
-                    .score-box {
-                        margin: 10px;
-                        font-weight: bold;
-                        display: inline;
                     }
                 `}
                 </style>
