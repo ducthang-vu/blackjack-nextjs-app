@@ -75,9 +75,11 @@ const Hand = ({ label, cardsLabel, cards, score, delays }: {
             <h2 className="hand__label">{label}</h2>
             <Score key={String(score)} score={score} revealAfter={scoreRevealTime(delays)} />
         </div>
-        <ul className="hand__cards" aria-label={cardsLabel}>
+        {/* Cascade, as dealt at a casino: each card on top of the previous one,
+            a little lower and to the right, so every card's corner stays visible. */}
+        <ul className="hand__cards" aria-label={cardsLabel} style={{ '--count': cards.length } as React.CSSProperties}>
             {cards.map((card, index) =>
-                <li key={index}>
+                <li key={index} style={{ '--i': index } as React.CSSProperties}>
                     <Card card={card} dealDelay={delays[index]} />
                 </li>
             )}
@@ -86,12 +88,14 @@ const Hand = ({ label, cardsLabel, cards, score, delays }: {
             .hand {
                 display: flex;
                 flex-direction: column;
+                align-items: center;
                 gap: var(--space-2);
             }
 
             .hand__head {
                 display: flex;
                 align-items: center;
+                justify-content: center;
                 gap: var(--space-2);
             }
 
@@ -103,11 +107,20 @@ const Hand = ({ label, cardsLabel, cards, score, delays }: {
                 color: var(--text-muted);
             }
 
+            /* The box is one card wide and centred, so the first card is centred and
+               stays put; later cards overlap down and to the right of it. It reserves
+               room for a few cards so a growing hand doesn't move anything else. */
             .hand__cards {
-                display: flex;
-                flex-wrap: wrap;
-                gap: var(--space-2);
-                min-height: var(--card-height);
+                position: relative;
+                width: var(--card-width);
+                height: calc(var(--card-height) + (var(--count) - 1) * var(--stack-dy));
+                min-height: var(--stack-reserve);
+            }
+
+            .hand__cards li {
+                position: absolute;
+                left: calc(var(--i) * var(--stack-dx));
+                top: calc(var(--i) * var(--stack-dy));
             }
         `}</style>
     </div>
@@ -149,12 +162,19 @@ const GameBoard = (
                 <style jsx>{`
                     .GameBoardComponent {
                         --card-height: 120px;
+                        --card-width: calc(var(--card-height) * 0.75);
+                        /* Each card in a cascade sits this far right of and below the previous one. */
+                        --stack-dx: calc(var(--card-height) * 0.13);
+                        --stack-dy: calc(var(--card-height) * 0.23);
+                        /* Room kept for a four-card hand, so most hands never change the table's height. */
+                        --stack-reserve: calc(var(--card-height) + 3 * var(--stack-dy));
                         position: relative;
                         padding: var(--space-5);
                         display: flex;
                         flex-direction: column;
                         gap: var(--space-5);
-                        min-height: calc(2 * var(--card-height) + 160px);
+                        /* Two reserved hands, their labels, and the house rules: as tall as a dealt table. */
+                        min-height: calc(2 * var(--stack-reserve) + 190px);
                     }
 
                     .hands {
@@ -185,12 +205,27 @@ const GameBoard = (
                     .house-rules {
                         margin-top: auto;
                         font-size: 13px;
+                        text-align: center;
                     }
 
+                    /* Phones are narrow but short: the two hands sit side by side, so neither
+                       can push the other down and the table plus action bar fit on one screen. */
                     @media (max-width: 640px) {
                         .GameBoardComponent {
                             --card-height: 100px;
                             padding: var(--space-4);
+                            gap: var(--space-4);
+                            min-height: calc(var(--stack-reserve) + 110px);
+                        }
+
+                        .hands {
+                            flex-direction: row;
+                            gap: var(--space-3);
+                        }
+
+                        .hands > :global(*) {
+                            flex: 1;
+                            min-width: 0;
                         }
                     }
                 `}

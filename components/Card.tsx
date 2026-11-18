@@ -72,7 +72,7 @@ const Card = ({ card, dealDelay = null }: CardProps): React.JSX.Element => {
                         width: 100%;
                         object-fit: fill;
                         border-radius: 6px;
-                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+                        box-shadow: -1px 1px 4px rgba(0, 0, 0, 0.28);
                         -webkit-backface-visibility: hidden;
                         backface-visibility: hidden;
                     }
