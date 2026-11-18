@@ -5,10 +5,9 @@ import MenuHead from './playerMenu/MenuHead'
 import MenuModals from './playerMenu/MenuModals'
 
 import { useAppDispatch, useAppSelector } from '../store/store'
-import { gameView, GameAction } from '../store/gameView'
-import { setUser } from '../store/slices/userSlice'
-import { startHand, makeBet, doSurrender, playerDraw, doPlayerStay,
-        autoAdvance, isAutomaticPhase } from '../store/actions/GameActions'
+import { gameView, GameAction } from '../game/view'
+import { isAutomaticPhase } from '../game/engine'
+import { startHand, play, autoAdvance } from '../store/actions/GameActions'
 
 
 interface GameProps {
@@ -21,25 +20,16 @@ const AUTOMATIC_STEP_DELAY_MS = 1500
 
 const Game = ({ username }:GameProps): React.JSX.Element => {
     const game = useAppSelector(state => state.game)
-    const user = useAppSelector(state => state.user)
     const dispatch = useAppDispatch()
 
-    // Message, buttons and pot are worked out from the store on every render.
-    const { message, actions, actionsDisabled, pot } = gameView({ game, user }, username)
+    // Message, buttons and pot are worked out from the game state on every render.
+    const { message, actions, pot } = gameView(game, username)
     const hand = game.current_hand
     const { banker, player, bankerScore, playerScore } = hand
 
-    const run = (action: GameAction) => {
-        switch (action.kind) {
-            case 'startHand': return dispatch(startHand())
-            case 'bet': return dispatch(makeBet(action.amount))
-            case 'hit': return dispatch(playerDraw())
-            case 'stand': return dispatch(doPlayerStay())
-            case 'doubleDown': return dispatch(playerDraw(true))
-            case 'surrender': return dispatch(doSurrender())
-            case 'startOver': return dispatch(setUser({ username, credits: action.credits }))
-        }
-    }
+    // Each button sends its event to the game; starting a hand may first fetch a shoe.
+    const run = ({ event }: GameAction) =>
+        dispatch(event.type === 'startHand' ? startHand() : play(event))
 
     // The deal, the dealer's cards and the end of the hand play by themselves,
     // one step per pause. Every change to the hand schedules the next step, and
@@ -62,13 +52,13 @@ const Game = ({ username }:GameProps): React.JSX.Element => {
             <div className="GameScreenComponent_game-menu column is-one-quarter">
                 <MenuHead
                     username={username}
-                    credits={user.credits}
+                    credits={game.credits}
                     currentPot={pot}
                 ></MenuHead>
                 <MenuModals
                     message={message}
                     buttons={actions.map(action => ({ label: action.label, handler: () => run(action) }))}
-                    disabled={actionsDisabled}
+                    disabled={game.pending}
                 ></MenuModals>
             </div>
             <style jsx>{`
