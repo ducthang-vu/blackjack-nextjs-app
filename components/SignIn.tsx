@@ -7,42 +7,62 @@ import { STARTING_CREDITS } from '../utils/betting'
 const SignIn = (): React.JSX.Element => {
     const [username, setUsername] = useState('')
     const dispatch = useAppDispatch()
-    const onChangeHandler = (e:React.ChangeEvent<HTMLInputElement>): void => setUsername(e.target.value)
+    const name = username.trim()
+
     const submitHandler = (e: React.FormEvent<HTMLFormElement>): void => {
         e.preventDefault()
-        dispatch(setUser(username))
+        if (!name) return
+        dispatch(setUser(name))
         dispatch(gameEvent({ type: 'newGame', credits: STARTING_CREDITS }))
     }
 
     return (
-        <section className="SignInComponent container has-text-centered">
-            <h1 className="title">
-                Welcome to Blackjack Next App
-            </h1>
-            <h2 className="subtitle">
-                Choose a username and start the game!
-            </h2>
+        <section className="panel sign-in">
+            <h1 className="title">Blackjack</h1>
+            <p className="subtitle">Pick a name to start with ${STARTING_CREDITS.toLocaleString('en-US')} in credit.</p>
+            <form onSubmit={submitHandler} className="form">
+                <label className="visually-hidden" htmlFor="username">Your name</label>
+                <input
+                    id="username"
+                    className="input"
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
+                    placeholder="Your name"
+                    autoComplete="nickname"
+                    maxLength={24}
+                    required
+                />
+                <button type="submit" className="btn btn-primary" disabled={!name}>Play</button>
+            </form>
+            <style jsx>{`
+                .sign-in {
+                    max-width: 420px;
+                    margin: var(--space-6) auto 0;
+                    padding: var(--space-6) var(--space-5);
+                    text-align: center;
+                }
 
-            <div className="columns is-centered mgt-medium">
-                <form onSubmit={submitHandler} className="column is-one-quarter has-text-left">
-                    <div className="field">
-                        <label className="label has-text-white" htmlFor="username">Username</label>
-                        <div className="control">
-                            <input 
-                                id="username"
-                                className="input"
-                                value={username} 
-                                onChange={onChangeHandler}
-                                placeholder="username"
-                                required
-                            ></input>
-                        </div>
-                    </div>
-                    <div className="control">
-                        <button disabled={!Boolean(username)} className="button">Play</button>
-                    </div>
-                </form>
-            </div>
+                .title {
+                    font-size: 28px;
+                    font-weight: 700;
+                }
+
+                .subtitle {
+                    margin-top: var(--space-1);
+                    color: var(--text-muted);
+                }
+
+                .form {
+                    margin-top: var(--space-5);
+                    display: flex;
+                    gap: var(--space-2);
+                }
+
+                .form .input {
+                    flex: 1;
+                    min-width: 0;
+                }
+            `}</style>
         </section>
     )
 }

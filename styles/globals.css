@@ -1,0 +1,228 @@
+/*
+ * Design tokens and base styles. Components use the variables below; light
+ * and dark follow the system setting unless the theme switch sets
+ * data-theme="light" or "dark" on <html>.
+ */
+
+:root {
+  color-scheme: light;
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-muted: #eef0f3;
+  --border: #dde1e6;
+  --text: #1c2026;
+  --text-muted: #5e6672;
+  --accent: #1f6f5c;
+  --accent-hover: #185a4a;
+  --accent-text: #ffffff;
+  --focus: #2f80ed;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+
+  --radius: 12px;
+  --radius-small: 8px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --content-width: 760px;
+
+  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #111418;
+    --surface: #191d22;
+    --surface-muted: #22272e;
+    --border: #2d333b;
+    --text: #e6e9ed;
+    --text-muted: #9aa3ad;
+    --accent: #3fae8c;
+    --accent-hover: #4fc39f;
+    --accent-text: #0d1f19;
+    --focus: #5aa2ff;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #111418;
+  --surface: #191d22;
+  --surface-muted: #22272e;
+  --border: #2d333b;
+  --text: #e6e9ed;
+  --text-muted: #9aa3ad;
+  --accent: #3fae8c;
+  --accent-hover: #4fc39f;
+  --accent-text: #0d1f19;
+  --focus: #5aa2ff;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul {
+  margin: 0;
+}
+
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-small);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 120ms, border-color 120ms, color 120ms;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--text-muted);
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Form fields */
+
+.input {
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-small);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+/* A plain surface panel */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* Text for screen readers only */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Long-form text pages (Rules, Info) */
+
+.prose {
+  padding: var(--space-6) var(--space-5);
+}
+
+.prose h1 {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.prose h2 {
+  margin-top: var(--space-6);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.prose p,
+.prose ul {
+  margin-top: var(--space-3);
+}
+
+.prose ul {
+  padding-left: var(--space-5);
+  list-style: disc;
+}
+
+.prose li + li {
+  margin-top: var(--space-2);
+}
+
+.prose li::marker {
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .prose {
+    padding: var(--space-5) var(--space-4);
+  }
+}
