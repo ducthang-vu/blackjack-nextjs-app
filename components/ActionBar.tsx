@@ -96,6 +96,12 @@ const ActionBar = ({ username, credits, pot, message, buttons, disabled }: Actio
                     position: sticky;
                     bottom: var(--space-2);
                     z-index: 1;
+                    padding: var(--space-3);
+                    gap: var(--space-2);
+                }
+
+                .message {
+                    font-size: 16px;
                 }
 
                 .stats {

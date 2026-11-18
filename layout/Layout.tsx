@@ -29,6 +29,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => (
                 margin: 0 auto;
                 padding: var(--space-5) var(--space-4);
             }
+
+            @media (max-width: 640px) {
+                .page__main {
+                    padding: var(--space-3) var(--space-3) var(--space-4);
+                }
+            }
         `}</style>
     </div>
 )
