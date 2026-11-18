@@ -77,6 +77,7 @@ const doInitialDeal = (): Thunk => (dispatch, getState) => {
 const doSurrender = (): Thunk => (dispatch, getState) => {
     if (!canAct(getState(), [FirstUserAction])) return
     dispatch(surrendered())
+    dispatch(settleHand())
 }
 
 /** Hit, or Double Down when `isDoubleDown` (first action only; doubles the bet and draws one card). */
@@ -85,6 +86,7 @@ const playerDraw = (isDoubleDown = false): Thunk => (dispatch, getState) => {
     if (!canAct(getState(), phases)) return
     if (!isDoubleDown) {
         dispatch(playerDrew())
+        dispatch(settleHand()) // pays nothing unless the card busted the player
         return
     }
     const { user: { credits }, game: { current_hand: { ammountBet } } } = getState()
@@ -92,6 +94,7 @@ const playerDraw = (isDoubleDown = false): Thunk => (dispatch, getState) => {
     if (!canAfford(credits, ammountBet)) return
     dispatch(changeCredits(-ammountBet))
     dispatch(doubledDown())
+    dispatch(settleHand()) // pays nothing unless the card busted the player
 }
 
 const doPlayerStay = (): Thunk => (dispatch, getState) => {
@@ -107,12 +110,14 @@ const bankerDraw = (): Thunk => (dispatch, getState) => {
 
 const doEndgame = (): Thunk => dispatch => {
     dispatch(handEnded())
+    dispatch(settleHand())
 }
 
 /**
- * Pays out a finished hand exactly once. Safe to call repeatedly (e.g. when the
- * game screen mounts again after navigating away): once the hand's payout is
- * recorded, further calls do nothing.
+ * Pays out a finished hand exactly once. The actions that can end a hand
+ * (Surrender, Hit, Double Down, and the end of the dealer's turn) call it right
+ * after their reducer; it does nothing unless the hand has ended and has not
+ * been paid yet.
  */
 const settleHand = (): Thunk => (dispatch, getState) => {
     const hand = getState().game.current_hand
