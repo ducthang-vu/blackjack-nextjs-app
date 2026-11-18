@@ -1,29 +1,24 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+/** The signed-in player. Credit is part of the game (game/engine.ts). */
 interface UserState {
     username: string | null,
-    credits: number | null
 }
 
 const initialState: UserState = {
     username: null,
-    credits: null
 }
 
 const userSlice = createSlice({
     name: 'user',
     initialState,
     reducers: {
-        setUser(state, action: PayloadAction<{ username: string, credits: number }>) {
-            state.username = action.payload.username
-            state.credits = action.payload.credits
-        },
-        changeCredits(state, action: PayloadAction<number>) {
-            state.credits += action.payload
+        setUser(state, action: PayloadAction<string>) {
+            state.username = action.payload
         },
     },
 })
 
 export type { UserState }
-export const { setUser, changeCredits } = userSlice.actions
+export const { setUser } = userSlice.actions
 export default userSlice.reducer
